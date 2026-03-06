@@ -392,20 +392,16 @@ export function SettingsClient({
           </CardHeader>
           <CardContent className="pt-0 space-y-6">
             <div className="space-y-1.5">
-              <Label>Pay Period Type</Label>
-              <Select
-                value={settings?.payPeriodType ?? "BIWEEKLY"}
-                onValueChange={(v) => v && saveSettings({ payPeriodType: v as "WEEKLY" | "BIWEEKLY" | "SEMIMONTHLY" })}
-              >
+              <Label>Pay Period Type (Fixed)</Label>
+              <Select value="BIWEEKLY" disabled>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="WEEKLY">Weekly</SelectItem>
                   <SelectItem value="BIWEEKLY">Biweekly</SelectItem>
-                  <SelectItem value="SEMIMONTHLY">Semimonthly</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Pay periods are fixed to 2 weeks.</p>
             </div>
 
             <div className="space-y-1.5">

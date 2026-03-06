@@ -46,11 +46,11 @@ async function main() {
 
   // ─── Pay Periods ─────────────────────────────────────────────────────────────
   const today = new Date();
-  const currentPeriodStart = new Date(today.getFullYear(), today.getMonth(), 1);
-  const currentPeriodEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const currentPeriodStart = startOfWeek(today, { weekStartsOn: 1 });
+  const currentPeriodEnd = addDays(currentPeriodStart, 13);
 
-  const prevPeriodStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const prevPeriodEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+  const prevPeriodStart = addDays(currentPeriodStart, -14);
+  const prevPeriodEnd = addDays(prevPeriodStart, 13);
 
   const openPeriod = await prisma.payPeriod.create({
     data: {
