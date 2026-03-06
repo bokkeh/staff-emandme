@@ -1,0 +1,221 @@
+
+> staff-emandme@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3000
+   - Network:      http://10.0.0.242:3000
+   - Environments: .env
+
+ ✓ Starting...
+
+   We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+   The following mandatory changes were made to your tsconfig.json:
+
+   	- jsx was set to preserve (next.js implements its own optimized jsx transform)
+
+ ✓ Ready in 1624ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 648ms (257 modules)
+ ○ Compiling /login ...
+[Error: Can't resolve 'shadcn/tailwind.css' in 'C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app'] {
+  details: "resolve 'shadcn/tailwind.css' in 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\app'\n" +
+    '  Parsed request is a module\n' +
+    '  using description file: C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\package.json (relative path: ./src/app)\n' +
+    '    resolve as module\n' +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\app\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\node_modules\n' +
+    "        C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\node_modules\\shadcn doesn't exist\n" +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\Users\\alext\\OneDrive\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\alext\\node_modules\n' +
+    "        C:\\Users\\alext\\node_modules\\shadcn doesn't exist\n" +
+    "      C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\node_modules doesn't exist or is not a directory"
+}
+ ⨯ ./src/app/globals.css:1:1
+Syntax error: tailwindcss: C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app\globals.css Can't resolve 'shadcn/tailwind.css' in 'C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app'
+
+[1m[31m>[39m[22m[90m 1 | [39m[36m@import[39m [32m"tailwindcss"[39m[33m;[39m
+ [90m   | [39m[1m[31m^[39m[22m
+ [90m 2 | [39m[36m@import[39m [32m"tw-animate-css"[39m[33m;[39m
+ [90m 3 | [39m[36m@import[39m [32m"shadcn/tailwind.css"[39m[33m;[39m
+<w> [webpack.cache.PackFileCacheStrategy] Skipped not serializable cache item 'Compilation/modules|C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\webpack\loaders\css-loader\src\index.js??ruleSet[1].rules[14].oneOf[10].use[2]!C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\webpack\loaders\postcss-loader\src\index.js??ruleSet[1].rules[14].oneOf[10].use[3]!C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app\globals.css': No serializer registered for PostCSSSyntaxError
+<w> while serializing webpack/lib/cache/PackFileCacheStrategy.PackContentItems -> webpack/lib/NormalModule -> webpack/lib/ModuleBuildError -> PostCSSSyntaxError
+[Error: Can't resolve 'shadcn/tailwind.css' in 'C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app'] {
+  details: "resolve 'shadcn/tailwind.css' in 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\app'\n" +
+    '  Parsed request is a module\n' +
+    '  using description file: C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\package.json (relative path: ./src/app)\n' +
+    '    resolve as module\n' +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\app\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\src\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\node_modules\n' +
+    "        C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\node_modules\\shadcn doesn't exist\n" +
+    "      C:\\Users\\alext\\OneDrive\\Desktop\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\Users\\alext\\OneDrive\\node_modules doesn't exist or is not a directory\n" +
+    '      looking for modules in C:\\Users\\alext\\node_modules\n' +
+    "        C:\\Users\\alext\\node_modules\\shadcn doesn't exist\n" +
+    "      C:\\Users\\node_modules doesn't exist or is not a directory\n" +
+    "      C:\\node_modules doesn't exist or is not a directory"
+}
+ ⨯ ./src/app/globals.css:1:1
+Syntax error: tailwindcss: C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app\globals.css Can't resolve 'shadcn/tailwind.css' in 'C:\Users\alext\OneDrive\Desktop\staff-emandme\src\app'
+
+[1m[31m>[39m[22m[90m 1 | [39m[36m@import[39m [32m"tailwindcss"[39m[33m;[39m
+ [90m   | [39m[1m[31m^[39m[22m
+ [90m 2 | [39m[36m@import[39m [32m"tw-animate-css"[39m[33m;[39m
+ [90m 3 | [39m[36m@import[39m [32m"shadcn/tailwind.css"[39m[33m;[39m
+ GET /login 500 in 5875ms
+ ✓ Compiled /_error in 609ms (1098 modules)
+ ✓ Compiled /_not-found in 216ms (993 modules)
+ ⨯ Error: Cannot find module './vendor-chunks/sonner.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\webpack-runtime.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\_not-found\page.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\_not-found\page.js:260:47)
+    at Object.<anonymous> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\_not-found\page.js:263:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ✓ Compiled /_error in 212ms (1089 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: Cannot find module 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\pages\_document.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: Cannot find module 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\pages\_document.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login 500 in 625ms
+ GET /login 500 in 33ms
+ ⨯ Error: Cannot find module './vendor-chunks/sonner.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\webpack-runtime.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js:346:47)
+    at Object.<anonymous> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js:349:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/login'
+}
+ ⨯ [Error: Cannot find module 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\pages\_document.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+Error: Cannot find module './vendor-chunks/sonner.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\webpack-runtime.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js:346:47)
+    at Object.<anonymous> (C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\app\login\page.js:349:3) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/login'
+}
+ ⨯ [Error: Cannot find module 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\server\pages\_document.js'
+Require stack:
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\require.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\load-components.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\utils.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\options.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\swc\index.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\config.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next.js
+- C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?callbackUrl=%2F 500 in 143ms
+ GET /login?callbackUrl=%2F 500 in 31ms
+ ✓ Compiled /favicon.ico in 285ms (702 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 526ms
