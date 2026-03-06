@@ -5,7 +5,9 @@
       "Read(//c/Users/alext/OneDrive/Desktop/**)",
       "Bash(npx create-next-app@latest staff-portal-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack --yes)",
       "Bash(cp -r staff-portal-temp/. staff-emandme/)",
-      "Bash(rm -rf staff-portal-temp)"
+      "Bash(rm -rf staff-portal-temp)",
+      "Bash(npm install dotenv)",
+      "Bash(npm install @base-ui/react next-themes)"
     ]
   }
 }
