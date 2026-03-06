@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn, formatMinutes, formatDate, displayName, initials } from "@/lib/utils";
 import { Download, CheckCheck, X } from "lucide-react";
 import type { Employee, TimeEntry, TimeCategory, PayPeriod } from "@prisma/client";
@@ -28,22 +27,13 @@ type EmployeeSummary = {
   entryCount: number;
 };
 
-function buildSummaries(
-  employees: Employee[],
-  entries: EntryWithRelations[]
-): EmployeeSummary[] {
+function buildSummaries(employees: Employee[], entries: EntryWithRelations[]): EmployeeSummary[] {
   return employees.map((emp) => {
     const empEntries = entries.filter((e) => e.employeeId === emp.id);
     const total = empEntries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-    const approved = empEntries
-      .filter((e) => e.status === "APPROVED")
-      .reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-    const pending = empEntries
-      .filter((e) => e.status === "SUBMITTED")
-      .reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-    const rejected = empEntries
-      .filter((e) => e.status === "REJECTED")
-      .reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+    const approved = empEntries.filter((e) => e.status === "APPROVED").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+    const pending = empEntries.filter((e) => e.status === "SUBMITTED").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+    const rejected = empEntries.filter((e) => e.status === "REJECTED").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
 
     return {
       employee: emp,
@@ -74,63 +64,46 @@ export function PayrollClient({
 }) {
   const [pending, setPending] = useState(initialPending);
   const [periodEntries, setPeriodEntries] = useState(initialPeriodEntries);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
 
   const summaries = buildSummaries(employees, periodEntries);
-
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleAll = () => {
-    if (selected.size === pending.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(pending.map((e) => e.id)));
+  const pendingGroups = useMemo(() => {
+    const groups = new Map<string, { employee: Employee; entries: EntryWithRelations[]; totalMinutes: number }>();
+    for (const entry of pending) {
+      const current = groups.get(entry.employeeId);
+      if (!current) {
+        groups.set(entry.employeeId, {
+          employee: entry.employee,
+          entries: [entry],
+          totalMinutes: entry.durationMinutes ?? 0,
+        });
+      } else {
+        current.entries.push(entry);
+        current.totalMinutes += entry.durationMinutes ?? 0;
+      }
     }
-  };
+    return Array.from(groups.values()).sort((a, b) => b.totalMinutes - a.totalMinutes);
+  }, [pending]);
 
-  const handleBulkAction = async (action: "APPROVED" | "REJECTED") => {
-    if (selected.size === 0) return;
+  const handleBatchAction = async (entryIds: string[], action: "APPROVED" | "REJECTED") => {
+    if (entryIds.length === 0) return;
     setLoading(true);
     try {
       const res = await fetch("/api/payroll/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entryIds: Array.from(selected), action }),
+        body: JSON.stringify({ entryIds, action }),
       });
       if (!res.ok) {
         toast.error("Action failed");
         return;
       }
       const { count } = await res.json();
-      toast.success(
-        `${count} ${count === 1 ? "entry" : "entries"} ${action === "APPROVED" ? "approved" : "rejected"}`
-      );
-      setPending((prev) => prev.filter((e) => !selected.has(e.id)));
-      setSelected(new Set());
+      toast.success(`${count} ${count === 1 ? "entry" : "entries"} ${action === "APPROVED" ? "approved" : "rejected"}`);
+      const idSet = new Set(entryIds);
+      setPending((prev) => prev.filter((e) => !idSet.has(e.id)));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSingleAction = async (id: string, action: "APPROVED" | "REJECTED") => {
-    const res = await fetch(`/api/time/entries/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: action }),
-    });
-    if (res.ok) {
-      toast.success(action === "APPROVED" ? "Approved" : "Rejected");
-      setPending((prev) => prev.filter((e) => e.id !== id));
-    } else {
-      toast.error("Failed");
     }
   };
 
@@ -151,9 +124,7 @@ export function PayrollClient({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="summary" className="rounded-full px-4">
-            Period Summary
-          </TabsTrigger>
+          <TabsTrigger value="summary" className="rounded-full px-4">Period Summary</TabsTrigger>
         </TabsList>
 
         {currentRole === "ADMIN" && currentPeriod && (
@@ -164,7 +135,6 @@ export function PayrollClient({
         )}
       </div>
 
-      {/* Current period info */}
       {currentPeriod && (
         <div className="mb-4 p-3 rounded-lg bg-muted/40 text-sm text-muted-foreground flex items-center gap-2">
           <Badge
@@ -178,12 +148,11 @@ export function PayrollClient({
             {currentPeriod.status}
           </Badge>
           <span>
-            Pay period: {formatDate(currentPeriod.startDate)} — {formatDate(currentPeriod.endDate)}
+            Pay period: {formatDate(currentPeriod.startDate)} - {formatDate(currentPeriod.endDate)}
           </span>
         </div>
       )}
 
-      {/* Pending Approvals Tab */}
       <TabsContent value="approvals">
         {pending.length === 0 ? (
           <Card>
@@ -194,100 +163,76 @@ export function PayrollClient({
         ) : (
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">
-                  {pending.length} {pending.length === 1 ? "entry" : "entries"} awaiting review
-                </CardTitle>
-                {selected.size > 0 && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 text-green-700 border-green-200 hover:bg-green-50"
-                      onClick={() => handleBulkAction("APPROVED")}
-                      disabled={loading}
-                    >
-                      <CheckCheck className="w-3.5 h-3.5" />
-                      Approve {selected.size}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
-                      onClick={() => handleBulkAction("REJECTED")}
-                      disabled={loading}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                      Reject {selected.size}
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <CardTitle className="text-sm font-medium">
+                {pendingGroups.length} {pendingGroups.length === 1 ? "timesheet" : "timesheets"} awaiting review
+              </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 px-3 py-1.5 text-xs text-muted-foreground border-b">
-                  <Checkbox
-                    checked={selected.size === pending.length && pending.length > 0}
-                    onCheckedChange={toggleAll}
-                  />
-                  <span>Select all</span>
-                </div>
-                {pending.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg transition-colors",
-                      selected.has(entry.id) ? "bg-primary/5 border border-primary/20" : "bg-muted/30 hover:bg-muted/50"
-                    )}
-                  >
-                    <Checkbox
-                      checked={selected.has(entry.id)}
-                      onCheckedChange={() => toggleSelect(entry.id)}
-                    />
-                    <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={entry.employee.profilePhotoUrl ?? undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                        {initials(displayName(entry.employee))}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{displayName(entry.employee)}</span>
-                        <span className="text-muted-foreground text-sm">·</span>
-                        <span className="text-sm">{entry.category.name}</span>
+              <div className="space-y-3">
+                {pendingGroups.map((group) => (
+                  <div key={group.employee.id} className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="w-8 h-8 shrink-0">
+                          <AvatarImage src={group.employee.profilePhotoUrl ?? undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {initials(displayName(group.employee))}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">{displayName(group.employee)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"} submitted
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(entry.entryDate)}
-                        {entry.startTime && entry.endTime
-                          ? ` · ${format(new Date(entry.startTime), "h:mm a")} – ${format(new Date(entry.endTime), "h:mm a")}`
-                          : ""}
-                      </p>
-                      {entry.note && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{entry.note}</p>
-                      )}
+                      <div className="text-right">
+                        <p className="text-sm font-semibold">{formatMinutes(group.totalMinutes)}</p>
+                        <p className="text-xs text-muted-foreground">Pending total</p>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-semibold text-sm">{formatMinutes(entry.durationMinutes ?? 0)}</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {group.entries.slice(0, 6).map((entry) => (
+                        <div key={entry.id} className="rounded-lg bg-background border p-2">
+                          <p className="text-xs font-medium">{formatDate(entry.entryDate)}</p>
+                          <p className="text-xs text-muted-foreground">{entry.category.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {entry.startTime && entry.endTime
+                              ? `${format(new Date(entry.startTime), "h:mm a")} - ${format(new Date(entry.endTime), "h:mm a")}`
+                              : ""}
+                          </p>
+                          <p className="text-xs font-semibold mt-1">{formatMinutes(entry.durationMinutes ?? 0)}</p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex gap-1 shrink-0">
+
+                    <div className="flex justify-end gap-2">
                       <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-7 h-7 text-green-700 hover:bg-green-50"
-                        onClick={() => handleSingleAction(entry.id, "APPROVED")}
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 text-green-700 border-green-200 hover:bg-green-50"
+                        onClick={() => handleBatchAction(group.entries.map((e) => e.id), "APPROVED")}
+                        disabled={loading}
                       >
                         <CheckCheck className="w-3.5 h-3.5" />
+                        Approve Timesheet
                       </Button>
                       <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-7 h-7 text-red-600 hover:bg-red-50"
-                        onClick={() => handleSingleAction(entry.id, "REJECTED")}
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => handleBatchAction(group.entries.map((e) => e.id), "REJECTED")}
+                        disabled={loading}
                       >
                         <X className="w-3.5 h-3.5" />
+                        Reject Timesheet
                       </Button>
                     </div>
+
+                    {group.entries.length > 6 && (
+                      <p className="text-xs text-muted-foreground">+{group.entries.length - 6} more entries in this submission</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -296,7 +241,6 @@ export function PayrollClient({
         )}
       </TabsContent>
 
-      {/* Period Summary Tab */}
       <TabsContent value="summary">
         <Card>
           <CardContent className="pt-0">
@@ -314,10 +258,7 @@ export function PayrollClient({
               </thead>
               <tbody>
                 {summaries.map((s, i) => (
-                  <tr
-                    key={s.employee.id}
-                    className={cn("hover:bg-muted/20", i !== summaries.length - 1 && "border-b")}
-                  >
+                  <tr key={s.employee.id} className={cn("hover:bg-muted/20", i !== summaries.length - 1 && "border-b")}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Avatar className="w-7 h-7">
@@ -333,29 +274,19 @@ export function PayrollClient({
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right font-medium">{formatMinutes(s.totalMinutes)}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell">
-                      {formatMinutes(Math.min(s.totalMinutes, 40 * 60))}
-                    </td>
+                    <td className="px-4 py-3 text-right text-muted-foreground hidden sm:table-cell">{formatMinutes(Math.min(s.totalMinutes, 40 * 60))}</td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell">
-                      {s.overtimeMinutes > 0 ? (
-                        <span className="text-orange-600 font-medium">{formatMinutes(s.overtimeMinutes)}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
+                      {s.overtimeMinutes > 0 ? <span className="text-orange-600 font-medium">{formatMinutes(s.overtimeMinutes)}</span> : <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 py-3 text-right text-green-700">{formatMinutes(s.approvedMinutes)}</td>
-                    <td className="px-4 py-3 text-right text-amber-600 hidden md:table-cell">
-                      {s.pendingMinutes > 0 ? formatMinutes(s.pendingMinutes) : "—"}
-                    </td>
+                    <td className="px-4 py-3 text-right text-amber-600 hidden md:table-cell">{s.pendingMinutes > 0 ? formatMinutes(s.pendingMinutes) : "-"}</td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden lg:table-cell">{s.entryCount}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {summaries.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground text-sm">
-                No data for this pay period.
-              </div>
+              <div className="text-center py-12 text-muted-foreground text-sm">No data for this pay period.</div>
             )}
           </CardContent>
         </Card>
@@ -363,3 +294,4 @@ export function PayrollClient({
     </Tabs>
   );
 }
+

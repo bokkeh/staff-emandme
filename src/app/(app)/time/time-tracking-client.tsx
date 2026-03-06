@@ -495,8 +495,8 @@ export function TimeTrackingClient({
         <Card
           className={cn(
             allWeekSubmittedApproved
-              ? "border-green-200 bg-green-50/20"
-              : "border-blue-200 bg-blue-50/20"
+              ? "border-[#9ad9b6] bg-[#eefbf3]"
+              : "border-[#f2b8a0] bg-[#fff1eb]"
           )}
         >
           <CardHeader className="pb-3">
@@ -534,7 +534,7 @@ export function TimeTrackingClient({
                 return (
                   <div key={key} className="rounded-lg bg-muted/30 px-2 py-1.5 text-xs">
                     <p className="font-medium">{format(day, "EEE")}</p>
-                    <p className="text-muted-foreground">{mins > 0 ? formatMinutes(mins) : "—"}</p>
+                    <p className="text-muted-foreground">{mins > 0 ? formatMinutes(mins) : "-"}</p>
                   </div>
                 );
               })}
