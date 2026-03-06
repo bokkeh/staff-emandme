@@ -38,6 +38,19 @@ export async function POST(req: Request) {
   let created;
   try {
     created = await prisma.$transaction(async (tx) => {
+      const dates = requestedDays.map((d) => startOfDay(parseISO(d.entryDate)));
+      const approvedExisting = await tx.timeEntry.count({
+        where: {
+          employeeId,
+          source: "MANUAL",
+          status: "APPROVED",
+          entryDate: { in: dates },
+        },
+      });
+      if (approvedExisting > 0) {
+        throw new Error("Cannot submit for this week because it already has approved entries.");
+      }
+
       const results = [];
       for (const day of requestedDays) {
         const entryDate = parseISO(day.entryDate);
@@ -151,7 +164,7 @@ export async function PUT(req: Request) {
     });
 
     if (approvedExisting > 0) {
-      throw new Error("Cannot edit a weekly submission that already has approved entries.");
+      throw new Error("Cannot edit this week because it already has approved entries.");
     }
 
     await tx.timeEntry.deleteMany({
