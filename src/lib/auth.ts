@@ -24,6 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: authSecret,
   trustHost: true,
   adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
   providers: [
     Google({
       clientId: googleClientId,
@@ -31,9 +32,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      const userId = typeof token.sub === "string" ? token.sub : null;
+
+      if (!session.user) return session;
+
+      session.user.id = userId ?? "";
+
+      // Middleware runs on Edge; avoid Prisma calls there.
+      if (typeof (globalThis as { EdgeRuntime?: unknown }).EdgeRuntime !== "undefined" || !userId) {
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            employeeId: null,
+            role: null,
+            employeeStatus: null,
+          },
+        };
+      }
+
       const employee = await prisma.employee.findUnique({
-        where: { userId: user.id },
+        where: { userId },
         select: { id: true, role: true, firstName: true, lastName: true, status: true },
       });
 
@@ -41,7 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ...session,
         user: {
           ...session.user,
-          id: user.id,
+          id: userId,
           employeeId: employee?.id ?? null,
           role: employee?.role ?? null,
           employeeStatus: employee?.status ?? null,

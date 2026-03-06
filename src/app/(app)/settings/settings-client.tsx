@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { cn, displayName } from "@/lib/utils";
-import { Plus, Pencil, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import type { AppSettings, TimeCategory, Employee } from "@prisma/client";
 
 type PartialEmployee = Pick<
@@ -145,6 +145,28 @@ export function SettingsClient({
     }
   };
 
+  const deleteEmployee = async (employee: PartialEmployee) => {
+    const confirmed = window.confirm(
+      `Delete ${displayName(employee)}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/employees/${employee.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? "Failed to delete employee");
+        return;
+      }
+
+      setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
+      toast.success("Employee deleted");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const saveSettings = async (updates: Partial<typeof settings>) => {
     const res = await fetch("/api/settings", {
       method: "PATCH",
@@ -216,7 +238,7 @@ export function SettingsClient({
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground hidden md:table-cell">Email</th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Role</th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Status</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -252,14 +274,26 @@ export function SettingsClient({
                       </Badge>
                     </td>
                     <td className="px-3 py-2.5">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="w-7 h-7"
-                        onClick={() => openEditEmployee(emp)}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-7 h-7"
+                          onClick={() => openEditEmployee(emp)}
+                          disabled={loading}
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-7 h-7 text-destructive hover:text-destructive"
+                          onClick={() => deleteEmployee(emp)}
+                          disabled={loading}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -58,3 +58,55 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const role = (session.user as { role?: string })?.role;
+  const currentEmployeeId = (session.user as { employeeId?: string })?.employeeId;
+  if (role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  if (currentEmployeeId && currentEmployeeId === id) {
+    return NextResponse.json({ error: "You cannot delete your own employee record." }, { status: 400 });
+  }
+
+  const employee = await prisma.employee.findUnique({ where: { id }, select: { id: true } });
+  if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+
+  const [timeEntriesCount, activeTimerCount, payrollSummariesCount, reportsCount, approvedEntriesCount] =
+    await Promise.all([
+      prisma.timeEntry.count({ where: { employeeId: id } }),
+      prisma.activeTimer.count({ where: { employeeId: id } }),
+      prisma.payrollSummary.count({ where: { employeeId: id } }),
+      prisma.employee.count({ where: { managerId: id } }),
+      prisma.timeEntry.count({ where: { approvedById: id } }),
+    ]);
+
+  if (
+    timeEntriesCount > 0 ||
+    activeTimerCount > 0 ||
+    payrollSummariesCount > 0 ||
+    reportsCount > 0 ||
+    approvedEntriesCount > 0
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Cannot delete employee with linked records. Reassign reports and remove related time/payroll records first.",
+        details: {
+          timeEntriesCount,
+          activeTimerCount,
+          payrollSummariesCount,
+          reportsCount,
+          approvedEntriesCount,
+        },
+      },
+      { status: 409 }
+    );
+  }
+
+  await prisma.employee.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

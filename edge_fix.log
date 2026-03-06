@@ -1,0 +1,17 @@
+
+> staff-emandme@0.1.0 dev
+> next dev -p 3000
+
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3000
+   - Network:      http://10.0.0.242:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1772ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 881ms (257 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 4.1s (761 modules)
+ GET /login 200 in 5160ms
+ GET /login?callbackUrl=%2Fdashboard 200 in 63ms
