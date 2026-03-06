@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { addDays, format, differenceInSeconds, startOfDay, parseISO, startOfWeek } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,6 +104,16 @@ export function TimeTrackingClient({
       weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" }])
     )
   );
+  const activeCategories = useMemo(() => categories.filter((c) => c.isActive), [categories]);
+  const categoryNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of categories) map.set(c.id, c.name);
+    for (const e of entries) {
+      if (!map.has(e.categoryId)) map.set(e.categoryId, e.category?.name ?? e.categoryId);
+    }
+    return map;
+  }, [categories, entries]);
+  const getCategoryLabel = (id: string) => categoryNameById.get(id) ?? "Select category";
 
   const refreshEntries = useCallback(async () => {
     const start = selectedWeekStart;
@@ -124,9 +134,10 @@ export function TimeTrackingClient({
         weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" }])
       )
     );
+    setWeekCategoryId(activeCategories[0]?.id ?? categories[0]?.id ?? "");
     setWeekNote("");
     setIsEditingWeekSubmission(false);
-  }, [selectedWeekStart]);
+  }, [selectedWeekStart, activeCategories, categories]);
 
   useEffect(() => {
     void refreshEntries();
@@ -379,15 +390,20 @@ export function TimeTrackingClient({
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm font-medium">Clock In</p>
+              <p className="text-base font-semibold">Clock In</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Select value={clockCategory} onValueChange={(v) => setClockCategory(v ?? "")}>
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select category" />
+                    <span className={cn("truncate", !clockCategory && "text-muted-foreground")}>
+                      {clockCategory ? getCategoryLabel(clockCategory) : "Select category"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                        {c.name}
+                        {!c.isActive ? " (Inactive)" : ""}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -476,10 +492,16 @@ export function TimeTrackingClient({
       </div>
 
       {submittedWeekEntries.length > 0 && (
-        <Card>
+        <Card
+          className={cn(
+            allWeekSubmittedApproved
+              ? "border-green-200 bg-green-50/20"
+              : "border-blue-200 bg-blue-50/20"
+          )}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Submitted Weekly Timesheet</CardTitle>
+              <CardTitle className="text-base font-semibold">Submitted Weekly Timesheet</CardTitle>
               <Badge
                 variant="outline"
                 className={cn(
@@ -534,23 +556,23 @@ export function TimeTrackingClient({
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-3">
-            <CardTitle className="text-sm font-medium">Weekly Timesheet (Submit for Review)</CardTitle>
-            <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-semibold">Weekly Timesheet (Submit for Review)</CardTitle>
+            <div className="flex items-center gap-1 rounded-full border bg-muted/20 p-1">
               <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setSelectedWeekStart((prev) => addDays(prev, -7))}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <div className="text-xs text-muted-foreground min-w-[150px] text-center">{weekLabel}</div>
+              <div className="text-xs text-muted-foreground min-w-[170px] text-center px-1">{weekLabel}</div>
               <Button
                 type="button"
                 size="icon"
                 variant="outline"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setSelectedWeekStart((prev) => addDays(prev, 7))}
               >
                 <ChevronRight className="w-4 h-4" />
@@ -564,11 +586,16 @@ export function TimeTrackingClient({
               <Label>Category</Label>
               <Select value={weekCategoryId} onValueChange={(v) => setWeekCategoryId(v ?? "")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <span className={cn("truncate", !weekCategoryId && "text-muted-foreground")}>
+                    {weekCategoryId ? getCategoryLabel(weekCategoryId) : "Select category"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                      {c.name}
+                      {!c.isActive ? " (Inactive)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -776,11 +803,16 @@ export function TimeTrackingClient({
                 onValueChange={(v) => setManualForm((f) => ({ ...f, categoryId: v ?? f.categoryId }))}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <span className={cn("truncate", !manualForm.categoryId && "text-muted-foreground")}>
+                    {manualForm.categoryId ? getCategoryLabel(manualForm.categoryId) : "Select category"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                      {c.name}
+                      {!c.isActive ? " (Inactive)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>

@@ -26,7 +26,6 @@ export default async function TimePage() {
 
   const [categories, activeTimer, weekEntries] = await Promise.all([
     prisma.timeCategory.findMany({
-      where: { isActive: true },
       orderBy: { sortOrder: "asc" },
     }),
     prisma.activeTimer.findUnique({
