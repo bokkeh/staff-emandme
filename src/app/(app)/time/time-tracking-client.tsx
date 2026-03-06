@@ -24,11 +24,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn, formatMinutes, formatTime, formatDate } from "@/lib/utils";
-import { Play, Square, Plus, Trash2, Send, Clock, Edit2 } from "lucide-react";
+import { Play, Square, Plus, Trash2, Send } from "lucide-react";
 import type { TimeCategory, TimeEntry, ActiveTimer } from "@prisma/client";
-import { useRouter } from "next/navigation";
 
-type EntryWithCategory = TimeEntry & { category: TimeCategory };
+type ApprovedByLite = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName: string | null;
+} | null;
+type EntryWithCategory = TimeEntry & { category: TimeCategory; approvedBy?: ApprovedByLite };
 type TimerWithCategory = ActiveTimer & { category: TimeCategory };
 type DayTimeInput = { hours: string; minutes: string };
 
@@ -57,17 +62,17 @@ export function TimeTrackingClient({
   categories,
   activeTimer: initialTimer,
   weekEntries: initialEntries,
-  employeeId,
+  employeeId: _employeeId,
 }: {
   categories: TimeCategory[];
   activeTimer: TimerWithCategory | null;
   weekEntries: EntryWithCategory[];
   employeeId: string;
 }) {
-  const router = useRouter();
   const [timer, setTimer] = useState<TimerWithCategory | null>(initialTimer);
   const [entries, setEntries] = useState<EntryWithCategory[]>(initialEntries);
   const [loading, setLoading] = useState(false);
+  const [isEditingWeekSubmission, setIsEditingWeekSubmission] = useState(false);
 
   // Clock in form
   const [clockCategory, setClockCategory] = useState(categories[0]?.id ?? "");
@@ -132,7 +137,7 @@ export function TimeTrackingClient({
     setLoading(true);
     try {
       const res = await fetch("/api/time/timesheet-week", {
-        method: "POST",
+        method: isEditingWeekSubmission ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           categoryId: weekCategoryId,
@@ -148,13 +153,18 @@ export function TimeTrackingClient({
       }
 
       const data = await res.json();
-      toast.success(`${data.count} ${data.count === 1 ? "entry" : "entries"} submitted for review`);
+      toast.success(
+        `${data.count} ${data.count === 1 ? "entry" : "entries"} ${
+          isEditingWeekSubmission ? "resubmitted" : "submitted"
+        } for review`
+      );
       setWeekTime(
         Object.fromEntries(
           weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" }])
         )
       );
       setWeekNote("");
+      setIsEditingWeekSubmission(false);
       await refreshEntries();
     } finally {
       setLoading(false);
@@ -276,6 +286,41 @@ export function TimeTrackingClient({
     .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
 
   const pendingCount = entries.filter((e) => e.status === "DRAFT").length;
+  const submittedWeekEntries = entries.filter(
+    (e) => e.source === "MANUAL" && (e.status === "SUBMITTED" || e.status === "APPROVED")
+  );
+  const weekSubmissionMinutes = submittedWeekEntries.reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+  const allWeekSubmittedApproved =
+    submittedWeekEntries.length > 0 && submittedWeekEntries.every((e) => e.status === "APPROVED");
+  const approver = submittedWeekEntries.find((e) => e.approvedBy)?.approvedBy;
+  const approvalText = allWeekSubmittedApproved
+    ? `Approved by ${approver?.preferredName ?? approver?.firstName ?? "manager"}`
+    : "Pending approval";
+
+  const startEditWeeklySubmission = () => {
+    if (submittedWeekEntries.length === 0) return;
+    const first = submittedWeekEntries[0];
+    setWeekCategoryId(first.categoryId);
+    setWeekNote(first.note ?? "");
+
+    const next = Object.fromEntries(
+      weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" } as DayTimeInput])
+    ) as Record<string, DayTimeInput>;
+
+    for (const day of weekDays) {
+      const key = format(day, "yyyy-MM-dd");
+      const dayMinutes = submittedWeekEntries
+        .filter((e) => format(new Date(e.entryDate), "yyyy-MM-dd") === key)
+        .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+      next[key] = {
+        hours: dayMinutes > 0 ? String(Math.floor(dayMinutes / 60)) : "",
+        minutes: String(dayMinutes % 60).padStart(2, "0"),
+      };
+    }
+
+    setWeekTime(next);
+    setIsEditingWeekSubmission(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -407,6 +452,62 @@ export function TimeTrackingClient({
         </Button>
       </div>
 
+      {submittedWeekEntries.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Submitted Weekly Timesheet</CardTitle>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs",
+                  allWeekSubmittedApproved
+                    ? "bg-green-50 text-green-700 border-green-200"
+                    : "bg-blue-50 text-blue-700 border-blue-200"
+                )}
+              >
+                {approvalText}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <div>
+                <p className="font-medium">{submittedWeekEntries[0]?.category?.name ?? "Category"}</p>
+                {submittedWeekEntries[0]?.note && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{submittedWeekEntries[0].note}</p>
+                )}
+              </div>
+              <p className="font-semibold">{formatMinutes(weekSubmissionMinutes)}</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+              {weekDays.map((day) => {
+                const key = format(day, "yyyy-MM-dd");
+                const mins = submittedWeekEntries
+                  .filter((e) => format(new Date(e.entryDate), "yyyy-MM-dd") === key)
+                  .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+                return (
+                  <div key={key} className="rounded-lg bg-muted/30 px-2 py-1.5 text-xs">
+                    <p className="font-medium">{format(day, "EEE")}</p>
+                    <p className="text-muted-foreground">{mins > 0 ? formatMinutes(mins) : "—"}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startEditWeeklySubmission}
+                disabled={allWeekSubmittedApproved}
+              >
+                Edit + Resubmit
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium">Weekly Timesheet (Submit for Review)</CardTitle>
@@ -497,7 +598,7 @@ export function TimeTrackingClient({
             </p>
             <Button onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId} className="gap-2">
               <Send className="w-4 h-4" />
-              Submit Week
+              {isEditingWeekSubmission ? "Resubmit Week" : "Submit Week"}
             </Button>
           </div>
         </CardContent>

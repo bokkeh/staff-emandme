@@ -279,7 +279,7 @@ export function TeamDirectoryClient({
                   </td>
                   {isAdminView && (
                     <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
-                      {emp.hourlyRateCents != null ? `$${(emp.hourlyRateCents / 100).toFixed(2)}/hr` : "—"}
+                      {emp.hourlyRateCents != null ? `$${(emp.hourlyRateCents / 100).toFixed(2)}/hr` : "ï¿½"}
                     </td>
                   )}
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">

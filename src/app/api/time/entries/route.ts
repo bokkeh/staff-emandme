@@ -109,7 +109,12 @@ export async function GET(req: Request) {
         },
       }),
     },
-    include: { category: true },
+    include: {
+      category: true,
+      approvedBy: {
+        select: { id: true, firstName: true, lastName: true, preferredName: true },
+      },
+    },
     orderBy: { startTime: "desc" },
   });
 
