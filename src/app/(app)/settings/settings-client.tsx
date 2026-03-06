@@ -55,6 +55,8 @@ export function SettingsClient({
   // Employee dialog
   const [empDialogOpen, setEmpDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<PartialEmployee | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<PartialEmployee | null>(null);
   const [empForm, setEmpForm] = useState({
     firstName: "", lastName: "", preferredName: "",
     email: "", phone: "", role: "STAFF", jobTitle: "",
@@ -145,15 +147,18 @@ export function SettingsClient({
     }
   };
 
-  const deleteEmployee = async (employee: PartialEmployee) => {
-    const confirmed = window.confirm(
-      `Delete ${displayName(employee)}? This cannot be undone.`
-    );
-    if (!confirmed) return;
+  const openDeleteEmployee = (employee: PartialEmployee) => {
+    setDeleteTarget(employee);
+    setDeleteDialogOpen(true);
+  };
 
+  const deleteEmployee = async (mode: "soft" | "hard") => {
+    if (!deleteTarget) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/employees/${employee.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/employees/${deleteTarget.id}?mode=${mode}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         const err = await res.json();
         toast.error(err.error ?? "Failed to delete employee");
@@ -163,13 +168,15 @@ export function SettingsClient({
       const result = await res.json();
       if (result.softDeleted) {
         setEmployees((prev) =>
-          prev.map((e) => (e.id === employee.id ? { ...e, status: "INACTIVE" } : e))
+          prev.map((e) => (e.id === deleteTarget.id ? { ...e, status: "INACTIVE" } : e))
         );
-        toast.success("Employee set to inactive (linked records kept)");
+        toast.success("Employee set to inactive");
       } else {
-        setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
-        toast.success("Employee deleted");
+        setEmployees((prev) => prev.filter((e) => e.id !== deleteTarget.id));
+        toast.success("Employee hard deleted");
       }
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     } finally {
       setLoading(false);
     }
@@ -219,11 +226,17 @@ export function SettingsClient({
   };
 
   return (
-    <Tabs defaultValue="employees">
-      <TabsList className="mb-4">
-        <TabsTrigger value="employees">Employees</TabsTrigger>
-        <TabsTrigger value="categories">Time Categories</TabsTrigger>
-        <TabsTrigger value="general">General</TabsTrigger>
+    <Tabs defaultValue="employees" className="flex-col">
+      <TabsList className="mb-4 inline-flex w-fit rounded-full bg-muted p-1">
+        <TabsTrigger value="employees" className="rounded-full px-4">
+          Employees
+        </TabsTrigger>
+        <TabsTrigger value="categories" className="rounded-full px-4">
+          Time Categories
+        </TabsTrigger>
+        <TabsTrigger value="general" className="rounded-full px-4">
+          General
+        </TabsTrigger>
       </TabsList>
 
       {/* Employees Tab */}
@@ -296,7 +309,7 @@ export function SettingsClient({
                           size="icon"
                           variant="ghost"
                           className="w-7 h-7 text-destructive hover:text-destructive"
-                          onClick={() => deleteEmployee(emp)}
+                          onClick={() => openDeleteEmployee(emp)}
                           disabled={loading}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -414,6 +427,43 @@ export function SettingsClient({
           </CardContent>
         </Card>
       </TabsContent>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove Employee</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-sm">
+            <p>
+              Choose how to remove{" "}
+              <span className="font-medium">
+                {deleteTarget ? displayName(deleteTarget) : "this employee"}
+              </span>
+              .
+            </p>
+            <p className="text-muted-foreground">
+              Set Inactive keeps historical records. Hard Delete permanently removes the employee if no linked records exist.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button variant="outline" onClick={() => deleteEmployee("soft")} disabled={loading}>
+              Set Inactive
+            </Button>
+            <Button variant="destructive" onClick={() => deleteEmployee("hard")} disabled={loading}>
+              Hard Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Employee dialog */}
       <Dialog open={empDialogOpen} onOpenChange={setEmpDialogOpen}>

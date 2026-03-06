@@ -61,6 +61,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const url = new URL(_req.url);
+  const mode = url.searchParams.get("mode") === "hard" ? "hard" : "soft";
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -84,13 +86,31 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
       prisma.timeEntry.count({ where: { approvedById: id } }),
     ]);
 
-  if (
+  const hasLinkedRecords =
     timeEntriesCount > 0 ||
     activeTimerCount > 0 ||
     payrollSummariesCount > 0 ||
     reportsCount > 0 ||
-    approvedEntriesCount > 0
-  ) {
+    approvedEntriesCount > 0;
+
+  if (mode === "hard" && hasLinkedRecords) {
+    return NextResponse.json(
+      {
+        error:
+          "Hard delete blocked: employee has linked records. Use 'Set Inactive' or remove linked records first.",
+        details: {
+          timeEntriesCount,
+          activeTimerCount,
+          payrollSummariesCount,
+          reportsCount,
+          approvedEntriesCount,
+        },
+      },
+      { status: 409 }
+    );
+  }
+
+  if (mode === "soft") {
     const softDeleted = await prisma.employee.update({
       where: { id },
       data: { status: "INACTIVE" },
@@ -100,9 +120,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({
       ok: true,
       softDeleted: true,
+      mode: "soft",
       employee: softDeleted,
-      message:
-        "Employee has linked records and was set to INACTIVE instead of being fully deleted.",
+      message: "Employee set to INACTIVE.",
       details: {
         timeEntriesCount,
         activeTimerCount,
@@ -114,5 +134,5 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 
   await prisma.employee.delete({ where: { id } });
-  return NextResponse.json({ ok: true, softDeleted: false, deletedId: id });
+  return NextResponse.json({ ok: true, softDeleted: false, mode: "hard", deletedId: id });
 }
