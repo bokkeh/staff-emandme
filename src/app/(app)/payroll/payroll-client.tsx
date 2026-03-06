@@ -47,6 +47,16 @@ function buildSummaries(employees: Employee[], entries: EntryWithRelations[]): E
   });
 }
 
+function formatCurrencyFromCents(cents: number | null | undefined) {
+  if (cents == null) return "-";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
 export function PayrollClient({
   payPeriods,
   currentPeriod,
@@ -169,7 +179,11 @@ export function PayrollClient({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3">
-                {pendingGroups.map((group) => (
+                {pendingGroups.map((group) => {
+                  const rateCents = group.employee.hourlyRateCents;
+                  const estimateCents =
+                    rateCents == null ? null : Math.round((group.totalMinutes * rateCents) / 60);
+                  return (
                   <div key={group.employee.id} className="rounded-xl border bg-muted/20 p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -189,6 +203,9 @@ export function PayrollClient({
                       <div className="text-right">
                         <p className="text-sm font-semibold">{formatMinutes(group.totalMinutes)}</p>
                         <p className="text-xs text-muted-foreground">Pending total</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Est. pay: <span className="font-medium text-foreground">{formatCurrencyFromCents(estimateCents)}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -234,7 +251,8 @@ export function PayrollClient({
                       <p className="text-xs text-muted-foreground">+{group.entries.length - 6} more entries in this submission</p>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

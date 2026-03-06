@@ -322,7 +322,6 @@ export function TimeTrackingClient({
     (e) => e.source === "MANUAL" && (e.status === "SUBMITTED" || e.status === "APPROVED")
   );
   const weekSubmissionMinutes = submittedWeekEntries.reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
-  const hasApprovedWeekEntries = submittedWeekEntries.some((e) => e.status === "APPROVED");
   const allWeekSubmittedApproved =
     submittedWeekEntries.length > 0 && submittedWeekEntries.every((e) => e.status === "APPROVED");
   const approver = submittedWeekEntries.find((e) => e.approvedBy)?.approvedBy;
@@ -331,7 +330,7 @@ export function TimeTrackingClient({
     : "Pending approval";
 
   const startEditWeeklySubmission = () => {
-    if (submittedWeekEntries.length === 0 || hasApprovedWeekEntries) return;
+    if (submittedWeekEntries.length === 0) return;
     const first = submittedWeekEntries[0];
     setWeekCategoryId(first.categoryId);
     setWeekNote(first.note ?? "");
@@ -544,7 +543,6 @@ export function TimeTrackingClient({
                 variant="outline"
                 size="sm"
                 onClick={startEditWeeklySubmission}
-                disabled={hasApprovedWeekEntries}
               >
                 Edit + Resubmit
               </Button>
@@ -671,18 +669,13 @@ export function TimeTrackingClient({
             </p>
             <Button
               onClick={handleWeeklySubmit}
-              disabled={loading || !weekCategoryId || hasApprovedWeekEntries}
+              disabled={loading || !weekCategoryId}
               className="gap-2"
             >
               <Send className="w-4 h-4" />
               {isEditingWeekSubmission ? "Resubmit Week" : "Submit Week"}
             </Button>
           </div>
-          {hasApprovedWeekEntries && (
-            <p className="text-xs text-amber-700">
-              This week has approved entries and is locked from edits/resubmission.
-            </p>
-          )}
         </CardContent>
       </Card>
 
