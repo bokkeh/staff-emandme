@@ -160,8 +160,16 @@ export function SettingsClient({
         return;
       }
 
-      setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
-      toast.success("Employee deleted");
+      const result = await res.json();
+      if (result.softDeleted) {
+        setEmployees((prev) =>
+          prev.map((e) => (e.id === employee.id ? { ...e, status: "INACTIVE" } : e))
+        );
+        toast.success("Employee set to inactive (linked records kept)");
+      } else {
+        setEmployees((prev) => prev.filter((e) => e.id !== employee.id));
+        toast.success("Employee deleted");
+      }
     } finally {
       setLoading(false);
     }

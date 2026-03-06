@@ -91,22 +91,28 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
     reportsCount > 0 ||
     approvedEntriesCount > 0
   ) {
-    return NextResponse.json(
-      {
-        error:
-          "Cannot delete employee with linked records. Reassign reports and remove related time/payroll records first.",
-        details: {
-          timeEntriesCount,
-          activeTimerCount,
-          payrollSummariesCount,
-          reportsCount,
-          approvedEntriesCount,
-        },
+    const softDeleted = await prisma.employee.update({
+      where: { id },
+      data: { status: "INACTIVE" },
+      select: { id: true, status: true },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      softDeleted: true,
+      employee: softDeleted,
+      message:
+        "Employee has linked records and was set to INACTIVE instead of being fully deleted.",
+      details: {
+        timeEntriesCount,
+        activeTimerCount,
+        payrollSummariesCount,
+        reportsCount,
+        approvedEntriesCount,
       },
-      { status: 409 }
-    );
+    });
   }
 
   await prisma.employee.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, softDeleted: false, deletedId: id });
 }
