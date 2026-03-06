@@ -166,3 +166,9 @@
 }
  GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepCk6rszwfW7XHzMDbCeoTrHrjJ6sVt4OwzjrK3T666vilXtD77pRDMeDIJgyADXmg&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 145ms
  GET /login?error=Configuration 200 in 45ms
+ GET /login?error=Configuration 200 in 55ms
+ GET /favicon.ico 200 in 12ms
+ GET /login?error=Configuration 200 in 53ms
+ GET /favicon.ico 200 in 13ms
+ GET /login?error=Configuration 200 in 56ms
+[?25h
