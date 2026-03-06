@@ -10,7 +10,9 @@ const schema = z.object({
   days: z.array(
     z.object({
       entryDate: z.string(),
-      hours: z.number().min(0).max(24),
+      minutes: z.number().int().min(0).max(24 * 60).refine((v) => v % 15 === 0, {
+        message: "Minutes must be in 15-minute increments.",
+      }),
     })
   ),
 });
@@ -28,16 +30,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input", details: parsed.error }, { status: 400 });
   }
 
-  const requestedDays = parsed.data.days.filter((d) => d.hours > 0);
+  const requestedDays = parsed.data.days.filter((d) => d.minutes > 0);
   if (requestedDays.length === 0) {
-    return NextResponse.json({ error: "Enter at least one day with hours greater than 0." }, { status: 400 });
+    return NextResponse.json({ error: "Enter at least one day with time greater than 0." }, { status: 400 });
   }
 
   const created = await prisma.$transaction(async (tx) => {
     const results = [];
     for (const day of requestedDays) {
       const entryDate = parseISO(day.entryDate);
-      const minutes = Math.round(day.hours * 60);
+      const minutes = day.minutes;
 
       const dayStart = startOfDay(entryDate);
       const defaultStart = setHours(dayStart, 9);

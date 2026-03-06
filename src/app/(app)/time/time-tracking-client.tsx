@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 
 type EntryWithCategory = TimeEntry & { category: TimeCategory };
 type TimerWithCategory = ActiveTimer & { category: TimeCategory };
+type DayTimeInput = { hours: string; minutes: string };
 
 function LiveTimer({ startedAt }: { startedAt: Date }) {
   const [elapsed, setElapsed] = useState(differenceInSeconds(new Date(), startedAt));
@@ -86,8 +87,10 @@ export function TimeTrackingClient({
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const [weekCategoryId, setWeekCategoryId] = useState(categories[0]?.id ?? "");
   const [weekNote, setWeekNote] = useState("");
-  const [weekHours, setWeekHours] = useState<Record<string, string>>(
-    Object.fromEntries(weekDays.map((d) => [format(d, "yyyy-MM-dd"), ""]))
+  const [weekTime, setWeekTime] = useState<Record<string, DayTimeInput>>(
+    Object.fromEntries(
+      weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" }])
+    )
   );
 
   const refreshEntries = useCallback(async () => {
@@ -106,14 +109,17 @@ export function TimeTrackingClient({
   const handleWeeklySubmit = async () => {
     const daysPayload = weekDays.map((day) => {
       const key = format(day, "yyyy-MM-dd");
-      const raw = weekHours[key] ?? "";
+      const dayInput = weekTime[key] ?? { hours: "", minutes: "00" };
+      const hours = dayInput.hours ? Number(dayInput.hours) : 0;
+      const minutesPart = Number(dayInput.minutes || "0");
+      const totalMinutes = hours * 60 + minutesPart;
       return {
         entryDate: key,
-        hours: raw ? Number(raw) : 0,
+        minutes: totalMinutes,
       };
     });
 
-    if (!daysPayload.some((d) => d.hours > 0)) {
+    if (!daysPayload.some((d) => d.minutes > 0)) {
       toast.error("Enter hours for at least one day");
       return;
     }
@@ -143,7 +149,11 @@ export function TimeTrackingClient({
 
       const data = await res.json();
       toast.success(`${data.count} ${data.count === 1 ? "entry" : "entries"} submitted for review`);
-      setWeekHours(Object.fromEntries(weekDays.map((d) => [format(d, "yyyy-MM-dd"), ""])));
+      setWeekTime(
+        Object.fromEntries(
+          weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" }])
+        )
+      );
       setWeekNote("");
       await refreshEntries();
     } finally {
@@ -432,25 +442,47 @@ export function TimeTrackingClient({
               const existingMinutes = entries
                 .filter((e) => format(new Date(e.entryDate), "yyyy-MM-dd") === key && e.status !== "REJECTED")
                 .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+              const value = weekTime[key] ?? { hours: "", minutes: "00" };
               return (
                 <div key={key} className="rounded-lg border p-2 space-y-1.5">
                   <p className="text-xs font-medium">{format(day, "EEE")}</p>
                   <p className="text-xs text-muted-foreground">{format(day, "MMM d")}</p>
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    max={24}
-                    step="0.25"
-                    placeholder="0"
-                    value={weekHours[key] ?? ""}
-                    onChange={(e) =>
-                      setWeekHours((prev) => ({
-                        ...prev,
-                        [key]: e.target.value,
-                      }))
-                    }
-                  />
+                  <div className="grid grid-cols-2 gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={24}
+                      step="1"
+                      placeholder="Hrs"
+                      value={value.hours}
+                      onChange={(e) =>
+                        setWeekTime((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key], hours: e.target.value },
+                        }))
+                      }
+                    />
+                    <Select
+                      value={value.minutes}
+                      onValueChange={(v) =>
+                        setWeekTime((prev) => ({
+                          ...prev,
+                          [key]: { ...prev[key], minutes: v ?? "00" },
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="00">00m</SelectItem>
+                        <SelectItem value="15">15m</SelectItem>
+                        <SelectItem value="30">30m</SelectItem>
+                        <SelectItem value="45">45m</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
                     Existing: {formatMinutes(existingMinutes)}
                   </p>
@@ -461,7 +493,7 @@ export function TimeTrackingClient({
 
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              Enter hours per day, then submit to create and submit entries in one step.
+              Enter hours and 15-minute increments per day, then submit for review.
             </p>
             <Button onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId} className="gap-2">
               <Send className="w-4 h-4" />
