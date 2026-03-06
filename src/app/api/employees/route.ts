@@ -12,6 +12,7 @@ const schema = z.object({
   role: z.enum(["ADMIN", "MANAGER", "STAFF"]).default("STAFF"),
   jobTitle: z.string().optional(),
   department: z.string().optional(),
+  hourlyRateCents: z.number().int().min(0).optional(),
   managerId: z.string().optional(),
   startDate: z.string().optional(),
   birthMonth: z.number().min(1).max(12).optional(),

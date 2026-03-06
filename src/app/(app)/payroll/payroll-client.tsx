@@ -140,10 +140,10 @@ export function PayrollClient({
   };
 
   return (
-    <Tabs defaultValue="approvals">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <TabsList>
-          <TabsTrigger value="approvals">
+    <Tabs defaultValue="approvals" className="flex-col">
+      <div className="flex flex-col items-start gap-3 mb-4">
+        <TabsList className="inline-flex w-fit rounded-full bg-muted p-1">
+          <TabsTrigger value="approvals" className="rounded-full px-4">
             Pending Approvals
             {pending.length > 0 && (
               <span className="ml-1.5 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
@@ -151,7 +151,9 @@ export function PayrollClient({
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="summary">Period Summary</TabsTrigger>
+          <TabsTrigger value="summary" className="rounded-full px-4">
+            Period Summary
+          </TabsTrigger>
         </TabsList>
 
         {currentRole === "ADMIN" && currentPeriod && (

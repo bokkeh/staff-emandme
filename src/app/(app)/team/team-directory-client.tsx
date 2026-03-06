@@ -44,6 +44,7 @@ export function TeamDirectoryClient({
   employees: EmployeeWithManager[];
   currentUserRole: string | null;
 }) {
+  const isAdminView = currentUserRole === "ADMIN";
   const [view, setView] = useState<"grid" | "list">("grid");
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -200,6 +201,12 @@ export function TeamDirectoryClient({
                   <p className="text-xs text-muted-foreground">{emp.department}</p>
                 )}
 
+                {isAdminView && emp.hourlyRateCents != null && (
+                  <p className="text-xs text-muted-foreground">
+                    Rate: ${(emp.hourlyRateCents / 100).toFixed(2)}/hr
+                  </p>
+                )}
+
                 {birthdayMonth(emp.birthMonth, emp.birthDay) && (
                   <p className="text-xs text-muted-foreground">
                     🎂 {birthdayMonth(emp.birthMonth, emp.birthDay)}
@@ -222,6 +229,9 @@ export function TeamDirectoryClient({
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Department</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Role</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Manager</th>
+                {isAdminView && (
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Rate</th>
+                )}
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Started</th>
               </tr>
             </thead>
@@ -267,6 +277,11 @@ export function TeamDirectoryClient({
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                     {emp.manager ? displayName(emp.manager) : "—"}
                   </td>
+                  {isAdminView && (
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                      {emp.hourlyRateCents != null ? `$${(emp.hourlyRateCents / 100).toFixed(2)}/hr` : "�"}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
                     {emp.startDate ? formatDate(emp.startDate) : "—"}
                   </td>

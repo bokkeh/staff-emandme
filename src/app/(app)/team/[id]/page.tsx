@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { displayName, initials, formatDate, formatMinutes } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, Calendar, Cake } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, Cake, DollarSign } from "lucide-react";
 import { startOfWeek, endOfWeek } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -83,6 +83,7 @@ export default async function EmployeeProfilePage({
     currentUserRole === "ADMIN" ||
     currentUserRole === "MANAGER" ||
     (session?.user as { employeeId?: string })?.employeeId === id;
+  const canSeeRate = currentUserRole === "ADMIN";
 
   return (
     <div>
@@ -165,6 +166,12 @@ export default async function EmployeeProfilePage({
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Cake className="w-4 h-4 shrink-0" />
                     <span>{birthdayDisplay}</span>
+                  </div>
+                )}
+                {canSeeRate && employee.hourlyRateCents != null && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <DollarSign className="w-4 h-4 shrink-0" />
+                    <span>${(employee.hourlyRateCents / 100).toFixed(2)}/hr</span>
                   </div>
                 )}
               </div>

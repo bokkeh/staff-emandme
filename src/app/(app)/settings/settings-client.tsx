@@ -31,6 +31,7 @@ type PartialEmployee = Pick<
   Employee,
   | "id" | "firstName" | "lastName" | "preferredName" | "email"
   | "role" | "status" | "jobTitle" | "department" | "managerId"
+  | "hourlyRateCents"
   | "birthMonth" | "birthDay" | "birthYear" | "startDate"
   | "phone" | "profilePhotoUrl" | "preferredWorkHours"
 >;
@@ -60,7 +61,7 @@ export function SettingsClient({
   const [empForm, setEmpForm] = useState({
     firstName: "", lastName: "", preferredName: "",
     email: "", phone: "", role: "STAFF", jobTitle: "",
-    department: "", managerId: "", startDate: "",
+    department: "", hourlyRate: "", managerId: "", startDate: "",
     birthMonth: "", birthDay: "", birthYear: "",
     status: "ACTIVE",
   });
@@ -70,7 +71,7 @@ export function SettingsClient({
     setEmpForm({
       firstName: "", lastName: "", preferredName: "",
       email: "", phone: "", role: "STAFF", jobTitle: "",
-      department: "", managerId: "", startDate: "",
+      department: "", hourlyRate: "", managerId: "", startDate: "",
       birthMonth: "", birthDay: "", birthYear: "",
       status: "ACTIVE",
     });
@@ -88,6 +89,7 @@ export function SettingsClient({
       role: emp.role,
       jobTitle: emp.jobTitle ?? "",
       department: emp.department ?? "",
+      hourlyRate: emp.hourlyRateCents != null ? (emp.hourlyRateCents / 100).toFixed(2) : "",
       managerId: emp.managerId ?? "",
       startDate: emp.startDate ? new Date(emp.startDate).toISOString().split("T")[0] : "",
       birthMonth: emp.birthMonth ? String(emp.birthMonth) : "",
@@ -110,6 +112,9 @@ export function SettingsClient({
         role: empForm.role,
         jobTitle: empForm.jobTitle || undefined,
         department: empForm.department || undefined,
+        hourlyRateCents: empForm.hourlyRate
+          ? Math.round(Number(empForm.hourlyRate) * 100)
+          : undefined,
         managerId: empForm.managerId || undefined,
         startDate: empForm.startDate || undefined,
         birthMonth: empForm.birthMonth ? Number(empForm.birthMonth) : undefined,
@@ -258,6 +263,7 @@ export function SettingsClient({
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Name</th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground hidden md:table-cell">Email</th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Role</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground hidden lg:table-cell">Rate</th>
                   <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Status</th>
                   <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
@@ -282,6 +288,9 @@ export function SettingsClient({
                       >
                         {emp.role.charAt(0) + emp.role.slice(1).toLowerCase()}
                       </Badge>
+                    </td>
+                    <td className="px-3 py-2.5 hidden lg:table-cell text-sm text-muted-foreground">
+                      {emp.hourlyRateCents != null ? `$${(emp.hourlyRateCents / 100).toFixed(2)}/hr` : "—"}
                     </td>
                     <td className="px-3 py-2.5">
                       <Badge
@@ -542,6 +551,17 @@ export function SettingsClient({
                   onChange={(e) => setEmpForm((f) => ({ ...f, department: e.target.value }))}
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Hourly Rate (USD)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="e.g. 18.50"
+                value={empForm.hourlyRate}
+                onChange={(e) => setEmpForm((f) => ({ ...f, hourlyRate: e.target.value }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

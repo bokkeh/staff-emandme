@@ -12,6 +12,7 @@ const schema = z.object({
   role: z.enum(["ADMIN", "MANAGER", "STAFF"]).optional(),
   jobTitle: z.string().nullable().optional(),
   department: z.string().nullable().optional(),
+  hourlyRateCents: z.number().int().min(0).nullable().optional(),
   managerId: z.string().nullable().optional(),
   startDate: z.string().nullable().optional(),
   birthMonth: z.number().min(1).max(12).nullable().optional(),
@@ -45,6 +46,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (role === "STAFF") {
     delete data.role;
     delete data.status;
+    delete data.hourlyRateCents;
   }
 
   if (data.startDate !== undefined) {

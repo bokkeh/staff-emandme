@@ -28,6 +28,7 @@ export default async function SettingsPage() {
         status: true,
         jobTitle: true,
         department: true,
+        hourlyRateCents: true,
         managerId: true,
         birthMonth: true,
         birthDay: true,

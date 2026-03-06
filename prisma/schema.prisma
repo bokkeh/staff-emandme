@@ -83,6 +83,7 @@ model Employee {
   role               Role           @default(STAFF)
   jobTitle           String?
   department         String?
+  hourlyRateCents    Int?
   managerId          String?
   startDate          DateTime?
   birthMonth         Int?

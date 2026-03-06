@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { format, differenceInSeconds, startOfDay, parseISO } from "date-fns";
+import { addDays, format, differenceInSeconds, startOfDay, parseISO, startOfWeek } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,21 +82,74 @@ export function TimeTrackingClient({
     note: "",
   });
 
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const [weekCategoryId, setWeekCategoryId] = useState(categories[0]?.id ?? "");
+  const [weekNote, setWeekNote] = useState("");
+  const [weekHours, setWeekHours] = useState<Record<string, string>>(
+    Object.fromEntries(weekDays.map((d) => [format(d, "yyyy-MM-dd"), ""]))
+  );
+
   const refreshEntries = useCallback(async () => {
-    const today = new Date();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() + 1);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekEnd = addDays(start, 6);
 
     const res = await fetch(
-      `/api/time/entries?startDate=${format(weekStart, "yyyy-MM-dd")}&endDate=${format(weekEnd, "yyyy-MM-dd")}`
+      `/api/time/entries?startDate=${format(start, "yyyy-MM-dd")}&endDate=${format(weekEnd, "yyyy-MM-dd")}`
     );
     if (res.ok) {
       const data = await res.json();
       setEntries(data);
     }
   }, []);
+
+  const handleWeeklySubmit = async () => {
+    const daysPayload = weekDays.map((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      const raw = weekHours[key] ?? "";
+      return {
+        entryDate: key,
+        hours: raw ? Number(raw) : 0,
+      };
+    });
+
+    if (!daysPayload.some((d) => d.hours > 0)) {
+      toast.error("Enter hours for at least one day");
+      return;
+    }
+
+    if (!weekCategoryId) {
+      toast.error("Select a category first");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/time/timesheet-week", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categoryId: weekCategoryId,
+          note: weekNote || undefined,
+          days: daysPayload,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? "Failed to submit weekly timesheet");
+        return;
+      }
+
+      const data = await res.json();
+      toast.success(`${data.count} ${data.count === 1 ? "entry" : "entries"} submitted for review`);
+      setWeekHours(Object.fromEntries(weekDays.map((d) => [format(d, "yyyy-MM-dd"), ""])));
+      setWeekNote("");
+      await refreshEntries();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleClockIn = async () => {
     if (!clockCategory) return;
@@ -343,6 +396,80 @@ export function TimeTrackingClient({
           Add Entry
         </Button>
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium">Weekly Timesheet (Submit for Review)</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Category</Label>
+              <Select value={weekCategoryId} onValueChange={(v) => setWeekCategoryId(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Note (applies to submitted days)</Label>
+              <Input
+                placeholder="Optional note"
+                value={weekNote}
+                onChange={(e) => setWeekNote(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
+            {weekDays.map((day) => {
+              const key = format(day, "yyyy-MM-dd");
+              const existingMinutes = entries
+                .filter((e) => format(new Date(e.entryDate), "yyyy-MM-dd") === key && e.status !== "REJECTED")
+                .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+              return (
+                <div key={key} className="rounded-lg border p-2 space-y-1.5">
+                  <p className="text-xs font-medium">{format(day, "EEE")}</p>
+                  <p className="text-xs text-muted-foreground">{format(day, "MMM d")}</p>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    max={24}
+                    step="0.25"
+                    placeholder="0"
+                    value={weekHours[key] ?? ""}
+                    onChange={(e) =>
+                      setWeekHours((prev) => ({
+                        ...prev,
+                        [key]: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Existing: {formatMinutes(existingMinutes)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Enter hours per day, then submit to create and submit entries in one step.
+            </p>
+            <Button onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId} className="gap-2">
+              <Send className="w-4 h-4" />
+              Submit Week
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {Object.keys(byDay).length === 0 ? (
         <Card>
