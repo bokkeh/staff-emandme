@@ -4,12 +4,30 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_ID;
+const googleClientSecret =
+  process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET;
+const authSecret = process.env.AUTH_SECRET;
+
+if (!googleClientId || !googleClientSecret || !authSecret) {
+  const missing = [
+    !googleClientId ? "GOOGLE_CLIENT_ID (or AUTH_GOOGLE_ID)" : null,
+    !googleClientSecret ? "GOOGLE_CLIENT_SECRET (or AUTH_GOOGLE_SECRET)" : null,
+    !authSecret ? "AUTH_SECRET" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  throw new Error(`Missing auth environment variables: ${missing}`);
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: authSecret,
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
     }),
   ],
   callbacks: {
