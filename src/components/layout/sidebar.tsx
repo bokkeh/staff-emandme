@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -50,9 +50,11 @@ export function Sidebar() {
     (session?.user?.email ? session.user.email.split("@")[0] : "Staff");
 
   const userImage = session?.user?.image ?? undefined;
+  const employeeId = (session?.user as { employeeId?: string | null } | undefined)?.employeeId;
+  const profileHref = employeeId ? `/team/${employeeId}` : "/settings";
 
   const NavContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full font-sans">
       {/* Brand */}
       <div className="px-5 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
@@ -64,7 +66,7 @@ export function Sidebar() {
           </div>
           <div>
             <p className="text-sidebar-foreground font-semibold text-sm leading-none">Em & Me Studio</p>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>Staff Portal</p>
+            <p className="text-xs mt-0.5" style={{ color: "#333333" }}>Staff Portal</p>
           </div>
         </div>
       </div>
@@ -111,11 +113,11 @@ export function Sidebar() {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sidebar-foreground text-xs font-medium truncate">{userName}</p>
-            <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.45)" }}>{role ?? "—"}</p>
+            <p className="text-xs truncate" style={{ color: "#333333" }}>{role ?? "â€”"}</p>
           </div>
           <button
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors hover:bg-white/10"
-            style={{ color: "rgba(255,255,255,0.5)" }}
+            style={{ color: "#333333" }}
             onClick={() => signOut({ callbackUrl: "/login" })}
             title="Sign out"
           >
@@ -129,17 +131,49 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-56 shrink-0 flex-col bg-sidebar h-screen sticky top-0">
+      <aside className="hidden lg:flex w-56 shrink-0 flex-col bg-sidebar h-screen sticky top-0 font-sans">
         <NavContent />
       </aside>
 
-      {/* Mobile toggle */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-sidebar text-sidebar-foreground shadow-lg"
-        onClick={() => setMobileOpen(!mobileOpen)}
-      >
-        {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
+      {/* Mobile sticky header */}
+      <header className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 bg-sidebar border-b border-sidebar-border font-sans">
+        <div className="h-full px-3 flex items-center justify-between gap-2">
+          <button
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-sidebar-foreground hover:bg-black/5"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0"
+              style={{ backgroundColor: "#E68D83", color: "#fff" }}
+            >
+              EM
+            </div>
+            <p className="text-sm font-semibold text-[#333333] truncate">Staff Portal</p>
+          </div>
+
+          <Link
+            href={profileHref}
+            className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-black/5"
+            onClick={() => setMobileOpen(false)}
+            aria-label="View profile"
+          >
+            <Avatar className="w-7 h-7">
+              <AvatarImage src={userImage} />
+              <AvatarFallback
+                className="text-[10px] font-semibold"
+                style={{ backgroundColor: "#E68D83", color: "#fff" }}
+              >
+                {initials(userName)}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
+        </div>
+      </header>
 
       {/* Mobile sidebar */}
       {mobileOpen && (
@@ -148,7 +182,7 @@ export function Sidebar() {
             className="lg:hidden fixed inset-0 z-40 bg-black/50"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="lg:hidden fixed top-0 left-0 z-50 w-56 h-screen bg-sidebar shadow-xl">
+          <aside className="lg:hidden fixed top-14 left-0 z-50 w-56 h-[calc(100vh-3.5rem)] bg-sidebar shadow-xl font-sans">
             <NavContent />
           </aside>
         </>
@@ -156,3 +190,4 @@ export function Sidebar() {
     </>
   );
 }
+

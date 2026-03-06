@@ -48,7 +48,7 @@
 
 :root {
   /* Em & Me Studio — Coral + Teal brand palette */
-  --background: oklch(0.985 0.007 60);          /* warm off-white cream */
+  --background: #F5F5F5;          /* light neutral gray */
   --foreground: oklch(0.24 0.008 30);            /* #393434 warm dark */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.24 0.008 30);
@@ -74,8 +74,8 @@
   --radius: 0.75rem;
 
   /* Deep teal sidebar — #006965 */
-  --sidebar: oklch(0.41 0.09 188);
-  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar: #F0E7DE;
+  --sidebar-foreground: #333333;
   --sidebar-primary: oklch(0.70 0.10 22);        /* coral highlights on teal */
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.50 0.08 188);        /* lighter teal for active */
@@ -127,5 +127,14 @@
   }
   html {
     @apply font-sans;
+  }
+  body,
+  body * {
+    font-family: var(--font-sans), sans-serif !important;
+  }
+  h1,
+  h2 {
+    font-family: var(--font-sans), sans-serif !important;
+    font-weight: 700 !important;
   }
 }

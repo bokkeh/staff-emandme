@@ -335,7 +335,11 @@ export function PayrollClient({
               <div className="text-sm text-muted-foreground">Viewing pay period</div>
               <Select value={selectedSummaryPeriodId} onValueChange={(v) => setSelectedSummaryPeriodId(v ?? "")}>
                 <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Select pay period" />
+                  <span className="truncate">
+                    {selectedSummaryPeriod
+                      ? `${formatDate(selectedSummaryPeriod.startDate)} - ${formatDate(selectedSummaryPeriod.endDate)}${selectedSummaryPeriod.status === "OPEN" ? " (Current)" : ""}`
+                      : "Select pay period"}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   {payPeriods.map((period) => (
