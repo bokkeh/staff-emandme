@@ -2,7 +2,28 @@ import { auth, signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+function getAuthErrorMessage(error?: string): string | null {
+  if (!error) return null;
+
+  switch (error) {
+    case "AccessDenied":
+      return "Google sign-in was denied for this account. Ask the app owner to allow your Gmail in Google OAuth test users.";
+    case "OAuthAccountNotLinked":
+      return "This email is linked to another sign-in method. Use the original provider for this account.";
+    case "Configuration":
+      return "Auth configuration is invalid. Check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and AUTH_SECRET.";
+    default:
+      return `Sign-in failed (${error}).`;
+  }
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const { error } = await searchParams;
+  const authError = getAuthErrorMessage(error);
   const session = await auth();
   if (session) redirect("/dashboard");
 
@@ -56,6 +77,9 @@ export default async function LoginPage() {
             <p className="text-muted-foreground text-sm">
               Sign in to access the staff portal.
             </p>
+            {authError && (
+              <p className="text-sm text-red-600 mt-2">{authError}</p>
+            )}
           </div>
 
           <form
@@ -80,7 +104,7 @@ export default async function LoginPage() {
           </form>
 
           <p className="text-center text-xs text-muted-foreground">
-            Access is restricted to Em & Me Studio team members.
+            Use an approved Google account for this app.
           </p>
         </div>
       </div>
