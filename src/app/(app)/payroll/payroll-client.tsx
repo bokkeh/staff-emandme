@@ -270,6 +270,7 @@ export function PayrollClient({
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Regular</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">OT</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Approved</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Est. Payout</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Pending</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Entries</th>
                 </tr>
@@ -297,6 +298,13 @@ export function PayrollClient({
                       {s.overtimeMinutes > 0 ? <span className="text-orange-600 font-medium">{formatMinutes(s.overtimeMinutes)}</span> : <span className="text-muted-foreground">-</span>}
                     </td>
                     <td className="px-4 py-3 text-right text-green-700">{formatMinutes(s.approvedMinutes)}</td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatCurrencyFromCents(
+                        s.employee.hourlyRateCents == null
+                          ? null
+                          : Math.round((s.approvedMinutes * s.employee.hourlyRateCents) / 60)
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right text-amber-600 hidden md:table-cell">{s.pendingMinutes > 0 ? formatMinutes(s.pendingMinutes) : "-"}</td>
                     <td className="px-4 py-3 text-right text-muted-foreground hidden lg:table-cell">{s.entryCount}</td>
                   </tr>
