@@ -52,3 +52,249 @@
 }
  GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepCvahMiya-Jv-A94Iepbr7-geDNcNXDg5YrhlvHxkulAnhZPiUd6Ye4So8Y0bbeDg&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 1171ms
  GET /login?error=Configuration 200 in 152ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 590ms (748 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1339ms (1094 modules)
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?error=Configuration 500 in 5170ms
+ GET /login?error=Configuration 500 in 308ms
+ GET /login?error=Configuration 500 in 1650ms
+ GET /login?error=Configuration 500 in 51ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ✓ Compiled /favicon.ico in 330ms (1094 modules)
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 459ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?error=Configuration 500 in 905ms
+ GET /login?error=Configuration 500 in 273ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 60ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?error=Configuration 500 in 845ms
+ GET /login?error=Configuration 500 in 262ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 60ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?callbackUrl=%2F 500 in 767ms
+ GET /login?callbackUrl=%2F 500 in 263ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/login'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json'
+}
+ GET /login?callbackUrl=%2F 500 in 801ms
+ GET /login?callbackUrl=%2F 500 in 271ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\alext\OneDrive\Desktop\staff-emandme\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\alext\\OneDrive\\Desktop\\staff-emandme\\.next\\routes-manifest.json',
+  page: '/favicon.ico'
+}
+ GET /favicon.ico 500 in 49ms
+[?25h

@@ -1,0 +1,168 @@
+
+> staff-emandme@0.1.0 dev
+> next dev -p 3000
+
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3000
+   - Network:      http://10.0.0.242:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1679ms
+ ✓ Compiled /middleware in 299ms (257 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 2.2s (752 modules)
+ ✓ Compiled /api/auth/[...nextauth] in 353ms (757 modules)
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1033:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1312:5)
+    at async processAuthorizationCodeOpenIDResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1515:20)
+    at async handleOAuth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/oauth/callback.js:173:35)
+    at async Module.callback (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/index.js:47:41)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/index.js:43:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:38696)
+    at async AppRouteRouteModule.handle (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45978)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:203:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:195179)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:265:32)
+    at async handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:317:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1514:32)
+    at async DevServer.pipeImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1025:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next-server.js:393:17)
+    at async DevServer.handleRequestImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:916:17)
+    at async C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:400:20
+    at async Span.traceAsyncFn (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:396:24)
+    at async invokeRender (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:437:24)
+    at async requestHandlerImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:485:13)
+    at async Server.requestListener (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js:226:13)
+[31m[auth][details][0m: {
+  "error": "invalid_client",
+  "error_description": "Unauthorized",
+  "provider": "google"
+}
+ GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepAos1BfKVb0GKw-h-fwKAu8ByfCOYPqdWRxm6XX23bLRd0sd6g4AFIxLIJPJ01jBw&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 1239ms
+ GET /login?error=Configuration 200 in 152ms
+ POST /login?error=Configuration 303 in 82ms
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1033:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1312:5)
+    at async processAuthorizationCodeOpenIDResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1515:20)
+    at async handleOAuth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/oauth/callback.js:173:35)
+    at async Module.callback (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/index.js:47:41)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/index.js:43:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:38696)
+    at async AppRouteRouteModule.handle (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45978)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:203:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:195179)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:265:32)
+    at async handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:317:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1514:32)
+    at async DevServer.pipeImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1025:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next-server.js:393:17)
+    at async DevServer.handleRequestImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:916:17)
+    at async C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:400:20
+    at async Span.traceAsyncFn (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:396:24)
+    at async invokeRender (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:437:24)
+    at async requestHandlerImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:485:13)
+    at async Server.requestListener (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js:226:13)
+[31m[auth][details][0m: {
+  "error": "invalid_client",
+  "error_description": "Unauthorized",
+  "provider": "google"
+}
+ GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepDIsdavF8_iHaHHGkNddqkRsCTs2wpLEqrzeE3-Hcx_PjRULk0krBkqxhIXA6s5vw&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 142ms
+ GET /login?error=Configuration 200 in 40ms
+ GET /login?error=Configuration 200 in 57ms
+ ✓ Compiled /favicon.ico in 117ms (509 modules)
+ GET /favicon.ico 200 in 167ms
+ GET /login?error=Configuration 200 in 179ms
+ GET /favicon.ico 200 in 23ms
+ GET /login?error=Configuration 200 in 57ms
+ POST /login?error=Configuration 303 in 131ms
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1033:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1312:5)
+    at async processAuthorizationCodeOpenIDResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1515:20)
+    at async handleOAuth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/oauth/callback.js:173:35)
+    at async Module.callback (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/index.js:47:41)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/index.js:43:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:38696)
+    at async AppRouteRouteModule.handle (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45978)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:203:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:195179)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:265:32)
+    at async handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:317:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1514:32)
+    at async DevServer.pipeImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1025:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next-server.js:393:17)
+    at async DevServer.handleRequestImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:916:17)
+    at async C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:400:20
+    at async Span.traceAsyncFn (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:396:24)
+    at async invokeRender (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:437:24)
+    at async requestHandlerImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:485:13)
+    at async Server.requestListener (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js:226:13)
+[31m[auth][details][0m: {
+  "error": "invalid_client",
+  "error_description": "Unauthorized",
+  "provider": "google"
+}
+ GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepDVhKwRZ9wV_I_W9MWhNANhSL7pd93_aogdiNMJnZbuzVtGPVvG0AgbHXHPeHvZ3g&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 158ms
+ GET /login?error=Configuration 200 in 56ms
+ POST /login?error=Configuration 303 in 76ms
+[31m[auth][error][0m CallbackRouteError: Read more at https://errors.authjs.dev#callbackrouteerror
+[31m[auth][cause][0m: ResponseBodyError: server responded with an error in the response body
+    at checkOAuthBodyError (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1033:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async processGenericAccessTokenResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1312:5)
+    at async processAuthorizationCodeOpenIDResponse (webpack-internal:///(rsc)/./node_modules/oauth4webapi/build/index.js:1515:20)
+    at async handleOAuth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/oauth/callback.js:173:35)
+    at async Module.callback (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/actions/callback/index.js:47:41)
+    at async AuthInternal (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/lib/index.js:43:24)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/next-auth/node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:38696)
+    at async AppRouteRouteModule.handle (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:5:45978)
+    at async responseGenerator (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:203:38)
+    at async AppRouteRouteModule.handleResponse (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:1:195179)
+    at async handleResponse (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:265:32)
+    at async handler (webpack-internal:///(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&page=%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fauth%2F%5B...nextauth%5D%2Froute.ts&appDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme%5Csrc%5Capp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=C%3A%5CUsers%5Calext%5COneDrive%5CDesktop%5Cstaff-emandme&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!:317:13)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1422:9)
+    at async DevServer.renderPageComponent (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1474:24)
+    at async DevServer.renderToResponseImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1514:32)
+    at async DevServer.pipeImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:1025:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\next-server.js:393:17)
+    at async DevServer.handleRequestImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\base-server.js:916:17)
+    at async C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:400:20
+    at async Span.traceAsyncFn (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\trace\trace.js:157:20)
+    at async DevServer.handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\dev\next-dev-server.js:396:24)
+    at async invokeRender (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:240:21)
+    at async handleRequest (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:437:24)
+    at async requestHandlerImpl (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\router-server.js:485:13)
+    at async Server.requestListener (C:\Users\alext\OneDrive\Desktop\staff-emandme\node_modules\next\dist\server\lib\start-server.js:226:13)
+[31m[auth][details][0m: {
+  "error": "invalid_client",
+  "error_description": "Unauthorized",
+  "provider": "google"
+}
+ GET /api/auth/callback/google?iss=https%3A%2F%2Faccounts.google.com&code=4%2F0AfrIepCk6rszwfW7XHzMDbCeoTrHrjJ6sVt4OwzjrK3T666vilXtD77pRDMeDIJgyADXmg&scope=email+profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email+openid&authuser=0&hd=emandme.studio&prompt=consent 302 in 145ms
+ GET /login?error=Configuration 200 in 45ms
