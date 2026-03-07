@@ -12,7 +12,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn, formatMinutes, formatDate, displayName, initials } from "@/lib/utils";
 import { Download, CheckCheck, X } from "lucide-react";
-import type { Employee, TimeEntry, TimeCategory } from "@prisma/client";
+
+type EmployeeLike = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  profilePhotoUrl?: string | null;
+  hourlyRateCents?: number | null;
+  jobTitle?: string | null;
+  role: string;
+};
+
+type TimeEntryLike = {
+  id: string;
+  employeeId: string;
+  payPeriodId?: string | null;
+  entryDate: Date;
+  startTime?: Date | null;
+  endTime?: Date | null;
+  durationMinutes?: number | null;
+  status: string;
+};
+
+type TimeCategoryLike = {
+  name: string;
+};
 
 type PayrollPeriod = {
   id: string;
@@ -22,13 +47,13 @@ type PayrollPeriod = {
   type: string;
 };
 
-type EntryWithRelations = TimeEntry & {
-  employee: Employee;
-  category: TimeCategory;
+type EntryWithRelations = TimeEntryLike & {
+  employee: EmployeeLike;
+  category: TimeCategoryLike;
 };
 
 type EmployeeSummary = {
-  employee: Employee;
+  employee: EmployeeLike;
   totalMinutes: number;
   approvedMinutes: number;
   pendingMinutes: number;
@@ -46,7 +71,7 @@ type SummaryOverride = {
   entryCount?: number;
 };
 
-function buildSummaries(employees: Employee[], entries: EntryWithRelations[]): EmployeeSummary[] {
+function buildSummaries(employees: EmployeeLike[], entries: EntryWithRelations[]): EmployeeSummary[] {
   return employees.map((emp) => {
     const empEntries = entries.filter((e) => e.employeeId === emp.id);
     const total = empEntries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
@@ -90,7 +115,7 @@ export function PayrollClient({
 }: {
   payPeriods: PayrollPeriod[];
   currentPeriod: PayrollPeriod | null;
-  employees: Employee[];
+  employees: EmployeeLike[];
   pendingEntries: EntryWithRelations[];
   periodEntries: EntryWithRelations[];
   currentRole: string;
@@ -114,7 +139,7 @@ export function PayrollClient({
 
   const summaries = buildSummaries(employees, summaryEntries);
   const pendingGroups = useMemo(() => {
-    const groups = new Map<string, { employee: Employee; entries: EntryWithRelations[]; totalMinutes: number }>();
+    const groups = new Map<string, { employee: EmployeeLike; entries: EntryWithRelations[]; totalMinutes: number }>();
     for (const entry of pending) {
       const current = groups.get(entry.employeeId);
       if (!current) {
