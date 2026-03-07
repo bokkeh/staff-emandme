@@ -15,9 +15,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn, displayName, initials, formatDate } from "@/lib/utils";
-import type { Employee, Role, EmployeeStatus } from "@prisma/client";
 
-type EmployeeWithManager = Employee & {
+type Role = "ADMIN" | "MANAGER" | "STAFF";
+type EmployeeStatus = "ACTIVE" | "INACTIVE";
+
+type EmployeeWithManager = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  email: string;
+  role: Role;
+  status: EmployeeStatus;
+  jobTitle?: string | null;
+  department?: string | null;
+  hourlyRateCents?: number | null;
+  birthMonth?: number | null;
+  birthDay?: number | null;
+  profilePhotoUrl?: string | null;
+  startDate?: Date | string | null;
   manager: {
     id: string;
     firstName: string;
@@ -73,7 +89,7 @@ export function TeamDirectoryClient({
     });
   }, [employees, search, filterRole, filterDept, filterStatus]);
 
-  const birthdayMonth = (bm: number | null, bd: number | null) => {
+  const birthdayMonth = (bm?: number | null, bd?: number | null) => {
     if (!bm || !bd) return null;
     return new Date(2000, bm - 1, bd).toLocaleDateString("en-US", {
       month: "short",

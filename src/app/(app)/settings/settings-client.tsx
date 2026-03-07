@@ -25,24 +25,46 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn, displayName } from "@/lib/utils";
 import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
-import type { AppSettings, TimeCategory, Employee } from "@prisma/client";
 
-type PartialEmployee = Pick<
-  Employee,
-  | "id" | "firstName" | "lastName" | "preferredName" | "email"
-  | "role" | "status" | "jobTitle" | "department" | "managerId"
-  | "hourlyRateCents"
-  | "birthMonth" | "birthDay" | "birthYear" | "startDate"
-  | "phone" | "profilePhotoUrl" | "preferredWorkHours"
->;
+type AppSettingsLike = {
+  overtimeWeeklyHours?: number | null;
+  birthdaysVisibleToAll?: boolean | null;
+};
+
+type TimeCategoryLike = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
+type PartialEmployee = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  email: string;
+  role: string;
+  status: string;
+  jobTitle?: string | null;
+  department?: string | null;
+  managerId?: string | null;
+  hourlyRateCents?: number | null;
+  birthMonth?: number | null;
+  birthDay?: number | null;
+  birthYear?: number | null;
+  startDate?: Date | string | null;
+  phone?: string | null;
+  profilePhotoUrl?: string | null;
+  preferredWorkHours?: string | null;
+};
 
 export function SettingsClient({
   settings: initialSettings,
   categories: initialCategories,
   employees: initialEmployees,
 }: {
-  settings: AppSettings | null;
-  categories: TimeCategory[];
+  settings: AppSettingsLike | null;
+  categories: TimeCategoryLike[];
   employees: PartialEmployee[];
 }) {
   const [settings, setSettings] = useState(initialSettings);

@@ -25,7 +25,32 @@ import {
 } from "@/components/ui/dialog";
 import { cn, formatMinutes, formatTime, formatDate } from "@/lib/utils";
 import { Play, Square, Plus, Trash2, Send, ChevronLeft, ChevronRight } from "lucide-react";
-import type { TimeCategory, TimeEntry, ActiveTimer } from "@prisma/client";
+
+type TimeCategoryLike = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
+type TimeEntryLike = {
+  id: string;
+  categoryId: string;
+  source?: string;
+  rejectionReason?: string | null;
+  entryDate: Date | string;
+  startTime?: Date | string | null;
+  endTime?: Date | string | null;
+  durationMinutes?: number | null;
+  note?: string | null;
+  status: string;
+};
+
+type ActiveTimerLike = {
+  id: string;
+  categoryId: string;
+  startedAt: Date;
+  note?: string | null;
+};
 
 type ApprovedByLite = {
   id: string;
@@ -33,8 +58,8 @@ type ApprovedByLite = {
   lastName: string;
   preferredName: string | null;
 } | null;
-type EntryWithCategory = TimeEntry & { category: TimeCategory; approvedBy?: ApprovedByLite };
-type TimerWithCategory = ActiveTimer & { category: TimeCategory };
+type EntryWithCategory = TimeEntryLike & { category: TimeCategoryLike; approvedBy?: ApprovedByLite };
+type TimerWithCategory = ActiveTimerLike & { category: TimeCategoryLike };
 type DayTimeInput = { hours: string; minutes: string };
 
 const dayKey = (date: Date | string) => {
@@ -69,7 +94,7 @@ export function TimeTrackingClient({
   weekEntries: initialEntries,
   employeeId: _employeeId,
 }: {
-  categories: TimeCategory[];
+  categories: TimeCategoryLike[];
   activeTimer: TimerWithCategory | null;
   weekEntries: EntryWithCategory[];
   employeeId: string;
