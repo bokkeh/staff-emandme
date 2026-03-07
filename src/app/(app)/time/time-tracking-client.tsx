@@ -519,8 +519,8 @@ export function TimeTrackingClient({
         <Card
           className={cn(
             allWeekSubmittedApproved
-              ? "border-[#9ad9b6] bg-[#eefbf3]"
-              : "border-[#f2b8a0] bg-[#fff1eb]"
+              ? "border-green-200 bg-green-50/60"
+              : "border-amber-200 bg-amber-50/60"
           )}
         >
           <CardHeader className="pb-3">
@@ -531,8 +531,8 @@ export function TimeTrackingClient({
                 className={cn(
                   "text-xs",
                   allWeekSubmittedApproved
-                    ? "bg-green-50 text-green-700 border-green-200"
-                    : "bg-blue-50 text-blue-700 border-blue-200"
+                    ? "bg-green-100 text-green-800 border-green-300"
+                    : "bg-amber-100 text-amber-800 border-amber-300"
                 )}
               >
                 {approvalText}
@@ -556,9 +556,12 @@ export function TimeTrackingClient({
                   .filter((e) => dayKey(e.entryDate) === key)
                   .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
                 return (
-                  <div key={key} className="rounded-lg bg-muted/30 px-2 py-1.5 text-xs">
-                    <p className="font-medium">{format(day, "EEE")}</p>
-                    <p className="text-muted-foreground">{mins > 0 ? formatMinutes(mins) : "-"}</p>
+                  <div
+                    key={key}
+                    className="rounded-lg border border-black/10 bg-background px-2.5 py-2 text-xs shadow-sm"
+                  >
+                    <p className="font-semibold text-foreground">{format(day, "EEE")}</p>
+                    <p className="text-foreground/80 mt-0.5">{mins > 0 ? formatMinutes(mins) : "-"}</p>
                   </div>
                 );
               })}
