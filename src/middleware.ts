@@ -1,7 +1,13 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default auth((req) => {
+function hasSessionCookie(req: NextRequest) {
+  return (
+    req.cookies.has("authjs.session-token") ||
+    req.cookies.has("__Secure-authjs.session-token")
+  );
+}
+
+export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes
@@ -9,14 +15,14 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!req.auth) {
+  if (!hasSessionCookie(req)) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],

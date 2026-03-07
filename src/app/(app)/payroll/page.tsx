@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { PayrollClient } from "./payroll-client";
 import { addDays, differenceInCalendarDays } from "date-fns";
+import type { PayPeriod } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function PayrollPage() {
     take: 10,
   });
 
-  const openPeriod = payPeriods.find((p) => p.status === "OPEN");
+  const openPeriod = payPeriods.find((p: PayPeriod) => p.status === "OPEN");
   if (
     openPeriod &&
     (openPeriod.type !== "BIWEEKLY" ||
@@ -43,7 +44,8 @@ export default async function PayrollPage() {
     take: 10,
   });
 
-  const currentPeriod = normalizedPeriods.find((p) => p.status === "OPEN") ?? normalizedPeriods[0] ?? null;
+  const currentPeriod =
+    normalizedPeriods.find((p: PayPeriod) => p.status === "OPEN") ?? normalizedPeriods[0] ?? null;
 
   const employees = await prisma.employee.findMany({
     where: { status: "ACTIVE" },
@@ -64,7 +66,7 @@ export default async function PayrollPage() {
 
   const periodEntries = normalizedPeriods.length
     ? await prisma.timeEntry.findMany({
-        where: { payPeriodId: { in: normalizedPeriods.map((p) => p.id) } },
+        where: { payPeriodId: { in: normalizedPeriods.map((p: PayPeriod) => p.id) } },
         include: { employee: true, category: true },
       })
     : [];
