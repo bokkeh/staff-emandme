@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -382,6 +383,23 @@ export function TimeTrackingClient({
 
   return (
     <div className="space-y-6">
+      <Tabs defaultValue="timesheets" className="flex-col">
+        <TabsList className="inline-flex w-fit rounded-full bg-muted p-1">
+          <TabsTrigger value="timesheets" className="rounded-full px-4">
+            Timesheets
+          </TabsTrigger>
+          <TabsTrigger value="previous-timesheets" className="rounded-full px-4">
+            Previous Timesheets
+          </TabsTrigger>
+          <TabsTrigger value="time-clock" className="rounded-full px-4">
+            Time Clock
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="rounded-full px-4">
+            Expenses
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="timesheets" className="space-y-6 pt-4">
       {/* Active timer / clock in card */}
       <Card className={cn(timer && "border-primary/40 bg-primary/5")}>
         <CardContent className="pt-6">
@@ -809,6 +827,32 @@ export function TimeTrackingClient({
             })}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="previous-timesheets" className="pt-4">
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground text-sm">
+              Previous Timesheets will appear here.
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="time-clock" className="pt-4">
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground text-sm">
+              Time Clock view coming next.
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="expenses" className="pt-4">
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground text-sm">
+              Expenses view coming next.
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Manual entry dialog */}
       <Dialog open={manualOpen} onOpenChange={setManualOpen}>
