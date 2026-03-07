@@ -57,8 +57,8 @@ export default async function EmployeeProfilePage({
   });
 
   const weekMinutes = recentEntries
-    .filter((e) => e.durationMinutes)
-    .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+    .filter((e: { durationMinutes: number | null }) => e.durationMinutes)
+    .reduce((sum, e: { durationMinutes: number | null }) => sum + (e.durationMinutes ?? 0), 0);
 
   const currentPeriod = await prisma.payPeriod.findFirst({
     where: { status: "OPEN" },
