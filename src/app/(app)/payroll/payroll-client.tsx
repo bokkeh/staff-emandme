@@ -12,7 +12,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn, formatMinutes, formatDate, displayName, initials } from "@/lib/utils";
 import { Download, CheckCheck, X } from "lucide-react";
-import type { Employee, TimeEntry, TimeCategory, PayPeriod } from "@prisma/client";
+import type { Employee, TimeEntry, TimeCategory } from "@prisma/client";
+
+type PayrollPeriod = {
+  id: string;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  type: string;
+};
 
 type EntryWithRelations = TimeEntry & {
   employee: Employee;
@@ -80,8 +88,8 @@ export function PayrollClient({
   periodEntries: initialPeriodEntries,
   currentRole,
 }: {
-  payPeriods: PayPeriod[];
-  currentPeriod: PayPeriod | null;
+  payPeriods: PayrollPeriod[];
+  currentPeriod: PayrollPeriod | null;
   employees: Employee[];
   pendingEntries: EntryWithRelations[];
   periodEntries: EntryWithRelations[];
