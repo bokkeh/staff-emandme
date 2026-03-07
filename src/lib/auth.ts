@@ -4,6 +4,28 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
 
+const isProd = process.env.NODE_ENV === "production";
+const vercelUrl = process.env.VERCEL_URL;
+
+function isLocalhostUrl(value?: string) {
+  if (!value) return false;
+  return value.includes("localhost") || value.includes("127.0.0.1");
+}
+
+if (isProd && isLocalhostUrl(process.env.NEXTAUTH_URL)) {
+  delete process.env.NEXTAUTH_URL;
+}
+if (isProd && isLocalhostUrl(process.env.AUTH_URL)) {
+  delete process.env.AUTH_URL;
+}
+
+if (isProd && !process.env.AUTH_URL && vercelUrl) {
+  process.env.AUTH_URL = `https://${vercelUrl}`;
+}
+if (isProd && !process.env.NEXTAUTH_URL && vercelUrl) {
+  process.env.NEXTAUTH_URL = `https://${vercelUrl}`;
+}
+
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_ID;
 const googleClientSecret =
   process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET;
