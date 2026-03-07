@@ -89,6 +89,11 @@ model Employee {
   birthMonth         Int?
   birthDay           Int?
   birthYear          Int?
+  homeAddress        String?
+  emergencyContactName String?
+  emergencyContactPhone String?
+  emergencyContactRelation String?
+  emergencyContactNotes String?
   status             EmployeeStatus @default(ACTIVE)
   profilePhotoUrl    String?
   preferredWorkHours String?
@@ -102,6 +107,21 @@ model Employee {
   activeTimer     ActiveTimer?
   approvedEntries TimeEntry[]     @relation("ApprovedBy")
   payrollSummaries PayrollSummary[]
+  pets            Pet[]
+}
+
+model Pet {
+  id         String   @id @default(cuid())
+  employeeId String
+  name       String
+  type       String
+  breed      String?
+  notes      String?
+  photoUrl   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 }
 
 // ─── Time Tracking ────────────────────────────────────────────────────────────

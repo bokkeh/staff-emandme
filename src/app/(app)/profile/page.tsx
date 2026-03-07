@@ -16,10 +16,16 @@ export default async function ProfilePage() {
   const employee = employeeId
     ? await prisma.employee.findUnique({
         where: { id: employeeId },
+        include: {
+          pets: { orderBy: { createdAt: "asc" } },
+        },
       })
     : userId
       ? await prisma.employee.findUnique({
           where: { userId },
+          include: {
+            pets: { orderBy: { createdAt: "asc" } },
+          },
         })
       : null;
 
