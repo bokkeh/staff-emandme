@@ -25,7 +25,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn, formatMinutes, formatTime, formatDate } from "@/lib/utils";
-import { Play, Square, Plus, Trash2, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, Square, Plus, Trash2, Send, ChevronLeft, ChevronRight, Download, Save } from "lucide-react";
 
 type TimeCategoryLike = {
   id: string;
@@ -93,7 +93,7 @@ export function TimeTrackingClient({
   categories,
   activeTimer: initialTimer,
   weekEntries: initialEntries,
-  employeeId: _employeeId,
+  employeeId,
 }: {
   categories: TimeCategoryLike[];
   activeTimer: TimerWithCategory | null;
@@ -343,7 +343,6 @@ export function TimeTrackingClient({
     .filter((e) => e.status !== "REJECTED")
     .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
 
-  const pendingCount = entries.filter((e) => e.status === "DRAFT").length;
   const submittedWeekEntries = entries.filter(
     (e) => e.source === "MANUAL" && (e.status === "SUBMITTED" || e.status === "APPROVED")
   );
@@ -380,6 +379,57 @@ export function TimeTrackingClient({
     setIsEditingWeekSubmission(true);
   };
   const weekLabel = `${format(weekDays[0], "MMM d")} - ${format(weekDays[6], "MMM d, yyyy")}`;
+  const submittedMinutes = entries
+    .filter((e) => e.status === "SUBMITTED")
+    .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+  const approvedMinutes = entries
+    .filter((e) => e.status === "APPROVED")
+    .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+  const dayTotals = weekDays.map((day) => {
+    const key = format(day, "yyyy-MM-dd");
+    return entries
+      .filter((e) => dayKey(e.entryDate) === key && e.status !== "REJECTED")
+      .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
+  });
+
+  const handleSaveDraft = () => {
+    try {
+      const payload = {
+        categoryId: weekCategoryId,
+        note: weekNote,
+        weekTime,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(`timesheet-draft:${employeeId}:${format(selectedWeekStart, "yyyy-MM-dd")}`, JSON.stringify(payload));
+      toast.success("Draft saved");
+    } catch {
+      toast.error("Could not save draft");
+    }
+  };
+
+  const handleExportWeek = () => {
+    const rows = entries
+      .slice()
+      .sort((a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime())
+      .map((e) => [
+        format(new Date(e.entryDate), "yyyy-MM-dd"),
+        e.category?.name ?? "",
+        String(e.durationMinutes ?? 0),
+        e.status,
+        (e.note ?? "").replace(/"/g, '""'),
+      ]);
+    const csv = [
+      ["Date", "Category", "Minutes", "Status", "Note"].join(","),
+      ...rows.map((r) => `${r[0]},${r[1]},${r[2]},${r[3]},"${r[4]}"`),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `timesheet-${format(selectedWeekStart, "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -400,138 +450,105 @@ export function TimeTrackingClient({
         </TabsList>
 
         <TabsContent value="timesheets" className="space-y-6 pt-4">
-      {/* Active timer / clock in card */}
-      <Card className={cn(timer && "border-primary/40 bg-primary/5")}>
-        <CardContent className="pt-6">
-          {timer ? (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                  Currently tracking
-                </p>
-                <p className="font-semibold text-lg">{timer.category.name}</p>
-                {timer.note && (
-                  <p className="text-sm text-muted-foreground mt-0.5">{timer.note}</p>
-                )}
-                <p className="text-xs text-muted-foreground mt-1">
-                  Started at {formatTime(timer.startedAt)}
-                </p>
-              </div>
-              <div className="flex flex-col items-end gap-3">
-                <LiveTimer startedAt={new Date(timer.startedAt)} />
-                <Button
-                  onClick={handleClockOut}
-                  disabled={loading}
-                  variant="destructive"
-                  className="gap-2"
-                >
-                  <Square className="w-4 h-4" />
-                  Clock Out
-                </Button>
-              </div>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">Timesheet</h2>
+              <p className="text-sm text-muted-foreground">Track your weekly hours</p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-base font-semibold">Clock In</p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Select value={clockCategory} onValueChange={(v) => setClockCategory(v ?? "")}>
-                  <SelectTrigger className="flex-1">
-                    <span className={cn("truncate", !clockCategory && "text-muted-foreground")}>
-                      {clockCategory ? getCategoryLabel(clockCategory) : "Select category"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
-                        {c.name}
-                        {!c.isActive ? " (Inactive)" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Note (optional)"
-                  value={clockNote}
-                  onChange={(e) => setClockNote(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleClockIn}
-                  disabled={loading || !clockCategory}
-                  className="gap-2 shrink-0"
-                >
-                  <Play className="w-4 h-4" />
-                  Clock In
-                </Button>
-              </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleExportWeek}>
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleSaveDraft}>
+                <Save className="w-4 h-4" />
+                Save Draft
+              </Button>
+              <Button size="sm" className="gap-2" onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId}>
+                <Send className="w-4 h-4" />
+                {isEditingWeekSubmission ? "Resubmit" : "Submit"}
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          {
-            label: "This Week",
-            value: formatMinutes(totalWeekMinutes),
-            sub: `${(totalWeekMinutes / 60).toFixed(1)}h total`,
-          },
-          {
-            label: "Today",
-            value: formatMinutes(
-              entries
-                .filter((e) => {
-                  const d = new Date(e.entryDate);
-                  const today = new Date();
-                  return (
-                    d.getFullYear() === today.getFullYear() &&
-                    d.getMonth() === today.getMonth() &&
-                    d.getDate() === today.getDate()
-                  );
-                })
-                .reduce((s, e) => s + (e.durationMinutes ?? 0), 0)
-            ),
-            sub: "logged today",
-          },
-          {
-            label: "Pending",
-            value: String(pendingCount),
-            sub: pendingCount === 1 ? "draft entry" : "draft entries",
-          },
-          {
-            label: "Approved",
-            value: formatMinutes(
-              entries
-                .filter((e) => e.status === "APPROVED")
-                .reduce((s, e) => s + (e.durationMinutes ?? 0), 0)
-            ),
-            sub: "this week",
-          },
-        ].map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="pt-5 pb-4">
-              <p className="text-2xl font-semibold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
-              <p className="text-xs text-muted-foreground/60">{stat.sub}</p>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={() => setSelectedWeekStart((prev) => addDays(prev, -7))}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="rounded-md border bg-muted/20 px-3 py-1.5 text-sm font-medium">
+                    {weekLabel}
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={() => setSelectedWeekStart((prev) => addDays(prev, 7))}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                >
+                  Current Week
+                </Button>
+              </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      {/* Weekly entries */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">This Week</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setManualOpen(true)}
-          className="gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Entry
-        </Button>
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-5 pb-4">
+                <p className="text-sm text-muted-foreground">Total Hours</p>
+                <p className="text-3xl font-semibold mt-1">{(totalWeekMinutes / 60).toFixed(1)}h</p>
+                <p className="text-xs text-muted-foreground mt-1">This week</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-5 pb-4">
+                <p className="text-sm text-muted-foreground">Submitted Hours</p>
+                <p className="text-3xl font-semibold mt-1 text-emerald-600">{(submittedMinutes / 60).toFixed(1)}h</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {totalWeekMinutes > 0 ? Math.round((submittedMinutes / totalWeekMinutes) * 100) : 0}% of total
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-5 pb-4">
+                <p className="text-sm text-muted-foreground">Approved Hours</p>
+                <p className="text-3xl font-semibold mt-1">{(approvedMinutes / 60).toFixed(1)}h</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {totalWeekMinutes > 0 ? Math.round((approvedMinutes / totalWeekMinutes) * 100) : 0}% of total
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Weekly Entries</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setManualOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Entry
+            </Button>
+          </div>
 
       {submittedWeekEntries.length > 0 && (
         <Card
@@ -725,6 +742,25 @@ export function TimeTrackingClient({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-semibold">Weekly Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+            {weekDays.map((day, idx) => (
+              <div key={format(day, "yyyy-MM-dd")} className="rounded-lg border bg-muted/10 p-3">
+                <p className="text-sm font-medium">{format(day, "EEE")}</p>
+                <p className="text-xs text-muted-foreground">{format(day, "MMM d")}</p>
+                <p className="text-xl font-semibold mt-2 text-blue-600">
+                  {(dayTotals[idx] / 60).toFixed(1)}h
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {Object.keys(byDay).length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground text-sm">
@@ -838,11 +874,75 @@ export function TimeTrackingClient({
         </TabsContent>
 
         <TabsContent value="time-clock" className="pt-4">
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground text-sm">
-              Time Clock view coming next.
-            </CardContent>
-          </Card>
+          <div className="space-y-4">
+            <Card className={cn(timer && "border-primary/40 bg-primary/5")}>
+              <CardContent className="pt-6">
+                {timer ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Currently tracking
+                      </p>
+                      <p className="font-semibold text-lg">{timer.category.name}</p>
+                      {timer.note && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{timer.note}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Started at {formatTime(timer.startedAt)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-3">
+                      <LiveTimer startedAt={new Date(timer.startedAt)} />
+                      <Button
+                        onClick={handleClockOut}
+                        disabled={loading}
+                        variant="destructive"
+                        className="gap-2"
+                      >
+                        <Square className="w-4 h-4" />
+                        Clock Out
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-base font-semibold">Clock In</p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Select value={clockCategory} onValueChange={(v) => setClockCategory(v ?? "")}>
+                        <SelectTrigger className="flex-1">
+                          <span className={cn("truncate", !clockCategory && "text-muted-foreground")}>
+                            {clockCategory ? getCategoryLabel(clockCategory) : "Select category"}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                              {c.name}
+                              {!c.isActive ? " (Inactive)" : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="Note (optional)"
+                        value={clockNote}
+                        onChange={(e) => setClockNote(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={handleClockIn}
+                        disabled={loading || !clockCategory}
+                        className="gap-2 shrink-0"
+                      >
+                        <Play className="w-4 h-4" />
+                        Clock In
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="expenses" className="pt-4">
