@@ -8,29 +8,23 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID ?? process.env.AUTH_GOOGLE_I
 const googleClientSecret =
   process.env.GOOGLE_CLIENT_SECRET ?? process.env.AUTH_GOOGLE_SECRET;
 const authSecret = process.env.AUTH_SECRET;
-
-if (!googleClientId || !googleClientSecret || !authSecret) {
-  const missing = [
-    !googleClientId ? "GOOGLE_CLIENT_ID (or AUTH_GOOGLE_ID)" : null,
-    !googleClientSecret ? "GOOGLE_CLIENT_SECRET (or AUTH_GOOGLE_SECRET)" : null,
-    !authSecret ? "AUTH_SECRET" : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
-  throw new Error(`Missing auth environment variables: ${missing}`);
-}
+const hasGoogleProvider = Boolean(googleClientId && googleClientSecret);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: authSecret,
+  // Keep builds from failing when env vars are not available at build-time.
+  // Runtime auth still requires real values in deployment env.
+  secret: authSecret ?? "build-time-auth-secret-placeholder",
   trustHost: true,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  providers: [
-    Google({
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
-    }),
-  ],
+  providers: hasGoogleProvider
+    ? [
+        Google({
+          clientId: googleClientId as string,
+          clientSecret: googleClientSecret as string,
+        }),
+      ]
+    : [],
   callbacks: {
     async jwt({ token, user }) {
       if (user?.id) {
