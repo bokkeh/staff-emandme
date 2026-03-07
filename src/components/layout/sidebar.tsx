@@ -8,6 +8,7 @@ import {
   Clock,
   Users,
   DollarSign,
+  UserCircle2,
   Settings,
   LogOut,
   ChevronRight,
@@ -28,6 +29,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Profile", href: "/profile", icon: UserCircle2 },
   { label: "Time Tracking", href: "/time", icon: Clock },
   { label: "Team Directory", href: "/team", icon: Users },
   { label: "Payroll", href: "/payroll", icon: DollarSign, roles: ["ADMIN", "MANAGER"] },
@@ -50,8 +52,7 @@ export function Sidebar() {
     (session?.user?.email ? session.user.email.split("@")[0] : "Staff");
 
   const userImage = session?.user?.image ?? undefined;
-  const employeeId = (session?.user as { employeeId?: string | null } | undefined)?.employeeId;
-  const profileHref = employeeId ? `/team/${employeeId}` : "/settings";
+  const profileHref = "/profile";
 
   const NavContent = () => (
     <div className="flex flex-col h-full font-sans">
