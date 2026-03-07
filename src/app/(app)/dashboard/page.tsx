@@ -61,7 +61,10 @@ export default async function DashboardPage() {
         : Promise.resolve(0),
     ]);
 
-  const weekMinutes = weekEntries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+  const weekMinutes = weekEntries.reduce(
+    (s: number, e: { durationMinutes: number | null }) => s + (e.durationMinutes ?? 0),
+    0
+  );
 
   const periodSummary = employeeId && currentPeriod
     ? await prisma.payrollSummary.findUnique({
