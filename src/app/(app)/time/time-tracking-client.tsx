@@ -558,7 +558,7 @@ export function TimeTrackingClient({
                 return (
                   <div
                     key={key}
-                    className="rounded-lg border border-black/10 bg-background px-2.5 py-2 text-xs shadow-sm"
+                    className="rounded-lg border border-black/10 bg-white px-2.5 py-2 text-xs shadow-sm"
                   >
                     <p className="font-semibold text-foreground">{format(day, "EEE")}</p>
                     <p className="text-foreground/80 mt-0.5">{mins > 0 ? formatMinutes(mins) : "-"}</p>
@@ -568,11 +568,11 @@ export function TimeTrackingClient({
             </div>
             <div className="flex justify-end">
               <Button
-                variant="outline"
                 size="sm"
+                className="gap-2"
                 onClick={startEditWeeklySubmission}
               >
-                Edit + Resubmit
+                Edit Timesheet
               </Button>
             </div>
           </CardContent>
