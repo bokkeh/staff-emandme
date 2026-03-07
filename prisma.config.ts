@@ -12,6 +12,6 @@ export default defineConfig({
   engine: "classic",
   datasource: {
     // Allow `prisma generate` during CI install steps where DATABASE_URL may not be set yet.
-    url: process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/postgres?schema=public",
+    url: process.env.DATABASE_URL ?? "postgresql://neondb_owner:npg_eJh4GoMn2UlF@ep-morning-brook-adks2qk9-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   },
 });
