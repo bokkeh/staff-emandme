@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { PayrollClient } from "./payroll-client";
@@ -12,6 +13,8 @@ type PayrollPeriod = {
   status: string;
   type: string;
 };
+
+type ExpenseWithEmployee = Prisma.ExpenseGetPayload<{ include: { employee: true } }>;
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +89,7 @@ export default async function PayrollPage() {
       })
     : [];
 
-  let periodExpenses: Awaited<ReturnType<typeof prisma.expense.findMany>> = [];
+  let periodExpenses: ExpenseWithEmployee[] = [];
   if (normalizedPeriods.length) {
     try {
       periodExpenses = await prisma.expense.findMany({
