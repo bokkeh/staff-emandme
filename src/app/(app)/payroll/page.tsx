@@ -15,6 +15,14 @@ type PayrollPeriod = {
 
 export const dynamic = "force-dynamic";
 
+function isMissingExpenseTableError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Expense") &&
+    (message.includes("does not exist") || message.includes("relation") || message.includes("P2021"))
+  );
+}
+
 export default async function PayrollPage() {
   const session = await auth();
   if (!session) redirect("/login");
@@ -78,15 +86,24 @@ export default async function PayrollPage() {
       })
     : [];
 
-  const periodExpenses = normalizedPeriods.length
-    ? await prisma.expense.findMany({
+  let periodExpenses: Awaited<ReturnType<typeof prisma.expense.findMany>> = [];
+  if (normalizedPeriods.length) {
+    try {
+      periodExpenses = await prisma.expense.findMany({
         where: {
           payPeriodId: { in: normalizedPeriods.map((p: PayrollPeriod) => p.id) },
           status: { not: "DRAFT" },
         },
         include: { employee: true },
-      })
-    : [];
+      });
+    } catch (error) {
+      if (!isMissingExpenseTableError(error)) {
+        throw error;
+      }
+      // Allow payroll page to load before expense migration is applied in production.
+      periodExpenses = [];
+    }
+  }
 
   return (
     <div>
