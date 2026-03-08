@@ -25,7 +25,23 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn, formatMinutes, formatTime, formatDate } from "@/lib/utils";
-import { Play, Square, Plus, Trash2, Send, ChevronLeft, ChevronRight, Download, Save } from "lucide-react";
+import {
+  Play,
+  Square,
+  Plus,
+  Trash2,
+  Send,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Save,
+  Receipt,
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  ChevronDown,
+  Pencil,
+} from "lucide-react";
 
 type TimeCategoryLike = {
   id: string;
@@ -104,6 +120,7 @@ export function TimeTrackingClient({
   const [entries, setEntries] = useState<EntryWithCategory[]>(initialEntries);
   const [loading, setLoading] = useState(false);
   const [isEditingWeekSubmission, setIsEditingWeekSubmission] = useState(false);
+  const [expenseView, setExpenseView] = useState<"current" | "submitted">("current");
   const [selectedWeekStart, setSelectedWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
@@ -761,7 +778,7 @@ export function TimeTrackingClient({
         </CardContent>
       </Card>
 
-      {Object.keys(byDay).length === 0 ? (
+      {false && (Object.keys(byDay).length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground text-sm">
             No time entries this week. Clock in or add a manual entry to get started.
@@ -816,7 +833,7 @@ export function TimeTrackingClient({
                             )}
                             {entry.startTime && entry.endTime && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {formatTime(entry.startTime)} – {formatTime(entry.endTime)}
+                                {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
                               </p>
                             )}
                             {entry.rejectionReason && (
@@ -862,15 +879,91 @@ export function TimeTrackingClient({
               );
             })}
         </div>
-      )}
+      ))}
         </TabsContent>
 
         <TabsContent value="previous-timesheets" className="pt-4">
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground text-sm">
-              Previous Timesheets will appear here.
-            </CardContent>
-          </Card>
+          <div className="space-y-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight">Previous Timesheets</h2>
+                <p className="text-sm text-muted-foreground">Review past weekly submissions and statuses</p>
+              </div>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handleExportWeek}>
+                <Download className="w-4 h-4" />
+                Export History
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-sm text-muted-foreground">Submitted Weeks</p>
+                  <p className="text-3xl font-semibold mt-1">12</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-sm text-muted-foreground">Approved</p>
+                  <p className="text-3xl font-semibold mt-1 text-emerald-600">10</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-5 pb-4">
+                  <p className="text-sm text-muted-foreground">Pending / Rejected</p>
+                  <p className="text-3xl font-semibold mt-1">2</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                {[
+                  {
+                    label: "February 2026 Timesheet",
+                    range: "Feb 1, 2026 - Feb 7, 2026",
+                    hours: "40.0h",
+                    status: "Approved",
+                    statusClass: "bg-green-100 text-green-800 border-green-200",
+                    submitted: "Submitted Mar 1, 2026",
+                  },
+                  {
+                    label: "January 2026 Timesheet",
+                    range: "Jan 25, 2026 - Jan 31, 2026",
+                    hours: "36.5h",
+                    status: "Needs Update",
+                    statusClass: "bg-amber-100 text-amber-800 border-amber-200",
+                    submitted: "Submitted Feb 1, 2026",
+                  },
+                ].map((row, index) => (
+                  <div
+                    key={row.label}
+                    className={cn(
+                      "flex items-center justify-between gap-4 p-5",
+                      index !== 1 && "border-b"
+                    )}
+                  >
+                    <div className="space-y-1">
+                      <p className="text-xl font-semibold">{row.label}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {row.range}
+                        </span>
+                        <span>{row.submitted}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-semibold leading-none">{row.hours}</p>
+                      <Badge variant="outline" className={cn("mt-2", row.statusClass)}>
+                        {row.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="time-clock" className="pt-4">
@@ -942,15 +1035,335 @@ export function TimeTrackingClient({
                 )}
               </CardContent>
             </Card>
+
+            {Object.keys(byDay).length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                  No time entries this week. Clock in or add a manual entry to get started.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(byDay)
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .map(([day, dayEntries]) => {
+                    const dayTotal = dayEntries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+                    return (
+                      <Card key={day}>
+                        <CardHeader className="pb-2 pt-4">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm font-medium">
+                              {format(parseISO(day), "EEEE, MMM d")}
+                            </CardTitle>
+                            <span className="text-sm text-muted-foreground font-medium">
+                              {formatMinutes(dayTotal)}
+                            </span>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            {dayEntries.map((entry) => (
+                              <div
+                                key={entry.id}
+                                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-sm">{entry.category.name}</span>
+                                    <Badge
+                                      variant="outline"
+                                      className={cn(
+                                        "text-xs",
+                                        entry.status === "APPROVED" && "bg-green-50 text-green-700 border-green-200",
+                                        entry.status === "SUBMITTED" && "bg-blue-50 text-blue-700 border-blue-200",
+                                        entry.status === "DRAFT" && "bg-muted text-muted-foreground",
+                                        entry.status === "REJECTED" && "bg-red-50 text-red-700 border-red-200"
+                                      )}
+                                    >
+                                      {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
+                                    </Badge>
+                                    {entry.source === "MANUAL" && (
+                                      <Badge variant="outline" className="text-xs">Manual</Badge>
+                                    )}
+                                  </div>
+                                  {entry.note && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">{entry.note}</p>
+                                  )}
+                                  {entry.startTime && entry.endTime && (
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                      {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
+                                    </p>
+                                  )}
+                                  {entry.rejectionReason && (
+                                    <p className="text-xs text-red-600 mt-0.5">
+                                      Rejected: {entry.rejectionReason}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-sm font-semibold">
+                                    {formatMinutes(entry.durationMinutes ?? 0)}
+                                  </p>
+                                </div>
+                                {(entry.status === "DRAFT" || entry.status === "REJECTED") && (
+                                  <div className="flex gap-1 shrink-0">
+                                    {entry.status === "DRAFT" && (
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="w-7 h-7 text-muted-foreground hover:text-blue-600"
+                                        onClick={() => handleSubmitEntry(entry.id)}
+                                        title="Submit for approval"
+                                      >
+                                        <Send className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="w-7 h-7 text-muted-foreground hover:text-destructive"
+                                      onClick={() => handleDeleteEntry(entry.id)}
+                                      title="Delete entry"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+              </div>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="expenses" className="pt-4">
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground text-sm">
-              Expenses view coming next.
-            </CardContent>
-          </Card>
+          <div className="space-y-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold tracking-tight">Expenses</h2>
+                <p className="text-sm text-muted-foreground">Track and submit your business expenses</p>
+              </div>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                New Expense
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-5 pb-4 flex items-center gap-3">
+                  <div className="rounded-xl bg-blue-100 text-blue-700 p-3">
+                    <Receipt className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Draft Expenses</p>
+                    <p className="text-3xl font-semibold leading-tight">3</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-5 pb-4 flex items-center gap-3">
+                  <div className="rounded-xl bg-emerald-100 text-emerald-700 p-3">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Amount</p>
+                    <p className="text-3xl font-semibold leading-tight">$168.49</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-5 pb-4 flex items-center gap-3">
+                  <div className="rounded-xl bg-violet-100 text-violet-700 p-3">
+                    <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Billable</p>
+                    <p className="text-3xl font-semibold leading-tight">$113.50</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="inline-flex rounded-full bg-muted p-1">
+              <button
+                type="button"
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  expenseView === "current" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setExpenseView("current")}
+              >
+                Current Expenses
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                  expenseView === "submitted" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setExpenseView("submitted")}
+              >
+                Submitted Reports
+              </button>
+            </div>
+
+            {expenseView === "current" ? (
+              <>
+                <Card>
+                  <CardContent className="pt-5 pb-5">
+                    <div className="flex items-center gap-4">
+                      <Label className="text-sm">Filter by category:</Label>
+                      <Select defaultValue="all">
+                        <SelectTrigger className="w-[220px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Categories</SelectItem>
+                          <SelectItem value="software">Software &amp; Tools</SelectItem>
+                          <SelectItem value="travel">Travel</SelectItem>
+                          <SelectItem value="meals">Meals &amp; Entertainment</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-3">
+                  {[
+                    {
+                      title: "Restaurant Downtown",
+                      note: "Client dinner meeting",
+                      amount: "$85.50",
+                      date: "3/4/2026",
+                      category: "Meals & Entertainment",
+                      billable: true,
+                      project: "Website Redesign",
+                    },
+                    {
+                      title: "Adobe Creative Cloud",
+                      note: "Monthly subscription",
+                      amount: "$54.99",
+                      date: "3/3/2026",
+                      category: "Software & Tools",
+                      billable: false,
+                      project: "",
+                    },
+                    {
+                      title: "Uber",
+                      note: "Trip to client office",
+                      amount: "$28.00",
+                      date: "3/2/2026",
+                      category: "Travel",
+                      billable: true,
+                      project: "Mobile App",
+                    },
+                  ].map((item) => (
+                    <Card key={item.title}>
+                      <CardContent className="pt-5 pb-5 flex items-start justify-between gap-4">
+                        <div className="space-y-2">
+                          <p className="text-2xl font-semibold leading-tight">{item.title}</p>
+                          <p className="text-sm text-muted-foreground">{item.note}</p>
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="inline-flex items-center gap-1 text-muted-foreground">
+                              <Calendar className="w-4 h-4" />
+                              {item.date}
+                            </span>
+                            <Badge variant="secondary">{item.category}</Badge>
+                            {item.billable && (
+                              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                                Billable
+                              </Badge>
+                            )}
+                            {item.project && (
+                              <span className="text-muted-foreground">Project: {item.project}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="text-right">
+                            <p className="text-4xl font-semibold leading-none">{item.amount}</p>
+                            <Badge variant="outline" className="mt-2">Draft</Badge>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card className="border-blue-200 bg-blue-50/70">
+                  <CardContent className="pt-5 pb-5 flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-xl font-semibold">Ready to submit?</p>
+                      <p className="text-sm text-muted-foreground">
+                        You have 3 draft expenses totaling $168.49
+                      </p>
+                    </div>
+                    <Button>Submit Expense Report</Button>
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  {
+                    label: "February 2026 Expenses",
+                    range: "1/31/2026 - 2/28/2026",
+                    count: "4 expenses",
+                    submitted: "Submitted 3/1/2026",
+                    total: "$1245.75",
+                    status: "Reimbursed",
+                    statusClass: "bg-violet-100 text-violet-800 border-violet-200",
+                  },
+                  {
+                    label: "January 2026 Expenses",
+                    range: "12/31/2025 - 1/30/2026",
+                    count: "3 expenses",
+                    submitted: "Submitted 2/1/2026",
+                    total: "$678.90",
+                    status: "Approved",
+                    statusClass: "bg-green-100 text-green-800 border-green-200",
+                  },
+                ].map((row) => (
+                  <Card key={row.label}>
+                    <CardContent className="pt-5 pb-5 flex items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <p className="text-2xl font-semibold">{row.label}</p>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {row.range}
+                          </span>
+                          <span>{row.count}</span>
+                          <span>{row.submitted}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-4xl font-semibold leading-none">{row.total}</p>
+                        <div className="mt-2 flex items-center justify-end gap-2">
+                          <Badge variant="outline" className={row.statusClass}>{row.status}</Badge>
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -1027,3 +1440,4 @@ export function TimeTrackingClient({
     </div>
   );
 }
+
