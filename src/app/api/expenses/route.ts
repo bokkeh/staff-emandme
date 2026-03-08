@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { parseISO } from "date-fns";
 import { z } from "zod";
@@ -27,10 +28,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const view = url.searchParams.get("view") ?? "current";
 
-  const where =
+  const where: Prisma.ExpenseWhereInput =
     view === "submitted"
-      ? { employeeId, status: { not: "DRAFT" as const } }
-      : { employeeId, status: { in: ["DRAFT", "SUBMITTED"] as const } };
+      ? { employeeId, status: { not: "DRAFT" } }
+      : { employeeId, status: { in: ["DRAFT", "SUBMITTED"] } };
 
   const [expenses, payPeriods] = await Promise.all([
     prisma.expense.findMany({
