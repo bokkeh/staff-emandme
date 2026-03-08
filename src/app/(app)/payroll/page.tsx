@@ -78,6 +78,16 @@ export default async function PayrollPage() {
       })
     : [];
 
+  const periodExpenses = normalizedPeriods.length
+    ? await prisma.expense.findMany({
+        where: {
+          payPeriodId: { in: normalizedPeriods.map((p: PayrollPeriod) => p.id) },
+          status: { not: "DRAFT" },
+        },
+        include: { employee: true },
+      })
+    : [];
+
   return (
     <div>
       <PageHeader
@@ -90,6 +100,7 @@ export default async function PayrollPage() {
         employees={employees}
         pendingEntries={pendingEntries}
         periodEntries={periodEntries}
+        periodExpenses={periodExpenses}
         currentRole={role ?? "MANAGER"}
       />
     </div>

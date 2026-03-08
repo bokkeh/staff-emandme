@@ -52,6 +52,15 @@ type EntryWithRelations = TimeEntryLike & {
   category: TimeCategoryLike;
 };
 
+type ExpenseWithEmployee = {
+  id: string;
+  employeeId: string;
+  payPeriodId?: string | null;
+  amountCents: number;
+  status: string;
+  employee: EmployeeLike;
+};
+
 type EmployeeSummary = {
   employee: EmployeeLike;
   totalMinutes: number;
@@ -111,6 +120,7 @@ export function PayrollClient({
   employees,
   pendingEntries: initialPending,
   periodEntries: initialPeriodEntries,
+  periodExpenses: initialPeriodExpenses,
   currentRole,
 }: {
   payPeriods: PayrollPeriod[];
@@ -118,10 +128,12 @@ export function PayrollClient({
   employees: EmployeeLike[];
   pendingEntries: EntryWithRelations[];
   periodEntries: EntryWithRelations[];
+  periodExpenses: ExpenseWithEmployee[];
   currentRole: string;
 }) {
   const [pending, setPending] = useState(initialPending);
   const [periodEntries, setPeriodEntries] = useState(initialPeriodEntries);
+  const [periodExpenses] = useState(initialPeriodExpenses);
   const [loading, setLoading] = useState(false);
   const [summaryOverrides, setSummaryOverrides] = useState<Record<string, SummaryOverride>>({});
   const [selectedSummaryPeriodId, setSelectedSummaryPeriodId] = useState(currentPeriod?.id ?? payPeriods[0]?.id ?? "");
@@ -138,6 +150,15 @@ export function PayrollClient({
   );
 
   const summaries = buildSummaries(employees, summaryEntries);
+  const expenseTotalsByEmployee = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const expense of periodExpenses) {
+      if (expense.payPeriodId !== selectedSummaryPeriodId) continue;
+      const current = map.get(expense.employeeId) ?? 0;
+      map.set(expense.employeeId, current + expense.amountCents);
+    }
+    return map;
+  }, [periodExpenses, selectedSummaryPeriodId]);
   const pendingGroups = useMemo(() => {
     const groups = new Map<string, { employee: EmployeeLike; entries: EntryWithRelations[]; totalMinutes: number }>();
     for (const entry of pending) {
@@ -393,6 +414,7 @@ export function PayrollClient({
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">OT</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Approved</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Est. Payout</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Expenses</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Pending</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Entries</th>
                 </tr>
@@ -416,6 +438,7 @@ export function PayrollClient({
                     </td>
                     {(() => {
                       const override = summaryOverrides[s.employee.id];
+                      const expenseCents = expenseTotalsByEmployee.get(s.employee.id) ?? 0;
                       const totalMinutes = override?.totalMinutes ?? s.totalMinutes;
                       const regularMinutes = override?.regularMinutes ?? Math.min(totalMinutes, 40 * 60);
                       const overtimeMinutes = override?.overtimeMinutes ?? s.overtimeMinutes;
@@ -488,6 +511,9 @@ export function PayrollClient({
                           ? null
                           : Math.round((approvedMinutes * s.employee.hourlyRateCents) / 60)
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-blue-700">
+                      {expenseCents > 0 ? formatCurrencyFromCents(expenseCents) : "-"}
                     </td>
                     <td className="px-4 py-3 text-right text-amber-600 hidden md:table-cell">
                       {isAdmin ? (

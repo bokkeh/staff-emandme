@@ -108,6 +108,7 @@ model Employee {
   approvedEntries TimeEntry[]     @relation("ApprovedBy")
   payrollSummaries PayrollSummary[]
   pets            Pet[]
+  expenses        Expense[]
 }
 
 model Pet {
@@ -214,6 +215,38 @@ model PayPeriod {
 
   timeEntries      TimeEntry[]
   payrollSummaries PayrollSummary[]
+  expenses         Expense[]
+}
+
+enum ExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REIMBURSED
+  REJECTED
+}
+
+model Expense {
+  id              String        @id @default(cuid())
+  employeeId      String
+  payPeriodId     String?
+  expenseDate     DateTime      @db.Date
+  merchant        String
+  category        String
+  description     String?
+  amountCents     Int
+  isBillable      Boolean       @default(false)
+  projectName     String?
+  receiptImageUrl String?       @db.Text
+  status          ExpenseStatus @default(DRAFT)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  employee Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payPeriod PayPeriod? @relation(fields: [payPeriodId], references: [id], onDelete: SetNull)
+
+  @@index([employeeId, expenseDate])
+  @@index([payPeriodId, status])
 }
 
 model PayrollSummary {

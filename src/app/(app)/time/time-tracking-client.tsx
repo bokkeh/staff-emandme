@@ -78,11 +78,40 @@ type ApprovedByLite = {
 type EntryWithCategory = TimeEntryLike & { category: TimeCategoryLike; approvedBy?: ApprovedByLite };
 type TimerWithCategory = ActiveTimerLike & { category: TimeCategoryLike };
 type DayTimeInput = { hours: string; minutes: string };
+type ExpenseStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "REIMBURSED" | "REJECTED";
+type PayPeriodLite = {
+  id: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  status: string;
+};
+type ExpenseLike = {
+  id: string;
+  expenseDate: Date | string;
+  merchant: string;
+  category: string;
+  description?: string | null;
+  amountCents: number;
+  isBillable: boolean;
+  projectName?: string | null;
+  receiptImageUrl?: string | null;
+  status: ExpenseStatus;
+  payPeriodId?: string | null;
+  payPeriod?: PayPeriodLite | null;
+};
 
 const dayKey = (date: Date | string) => {
   const d = new Date(date);
   return d.toISOString().slice(0, 10);
 };
+
+const formatCurrencyFromCents = (cents: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
 
 function LiveTimer({ startedAt }: { startedAt: Date }) {
   const [elapsed, setElapsed] = useState(differenceInSeconds(new Date(), startedAt));
@@ -138,6 +167,22 @@ export function TimeTrackingClient({
     endTime: "",
     note: "",
   });
+  const [expenses, setExpenses] = useState<ExpenseLike[]>([]);
+  const [expensePayPeriods, setExpensePayPeriods] = useState<PayPeriodLite[]>([]);
+  const [expensesLoading, setExpensesLoading] = useState(false);
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [expenseForm, setExpenseForm] = useState({
+    expenseDate: format(new Date(), "yyyy-MM-dd"),
+    merchant: "",
+    category: "Meals & Entertainment",
+    description: "",
+    amount: "",
+    isBillable: false,
+    projectName: "",
+    receiptImageUrl: "",
+    payPeriodId: "",
+  });
 
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(selectedWeekStart, i));
   const [weekCategoryId, setWeekCategoryId] = useState(categories[0]?.id ?? "");
@@ -171,6 +216,144 @@ export function TimeTrackingClient({
     }
   }, [selectedWeekStart]);
 
+  const refreshExpenses = useCallback(async () => {
+    setExpensesLoading(true);
+    try {
+      const res = await fetch(`/api/expenses?view=${expenseView}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setExpenses(data.expenses ?? []);
+      setExpensePayPeriods(data.payPeriods ?? []);
+    } finally {
+      setExpensesLoading(false);
+    }
+  }, [expenseView]);
+
+  const resetExpenseForm = () => {
+    setExpenseForm({
+      expenseDate: format(new Date(), "yyyy-MM-dd"),
+      merchant: "",
+      category: "Meals & Entertainment",
+      description: "",
+      amount: "",
+      isBillable: false,
+      projectName: "",
+      receiptImageUrl: "",
+      payPeriodId: "",
+    });
+    setEditingExpenseId(null);
+  };
+
+  const openNewExpense = () => {
+    resetExpenseForm();
+    setExpenseDialogOpen(true);
+  };
+
+  const openEditExpense = (expense: ExpenseLike) => {
+    setEditingExpenseId(expense.id);
+    setExpenseForm({
+      expenseDate: format(new Date(expense.expenseDate), "yyyy-MM-dd"),
+      merchant: expense.merchant,
+      category: expense.category,
+      description: expense.description ?? "",
+      amount: (expense.amountCents / 100).toFixed(2),
+      isBillable: expense.isBillable,
+      projectName: expense.projectName ?? "",
+      receiptImageUrl: expense.receiptImageUrl ?? "",
+      payPeriodId: expense.payPeriodId ?? "",
+    });
+    setExpenseDialogOpen(true);
+  };
+
+  const handleReceiptUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setExpenseForm((prev) => ({ ...prev, receiptImageUrl: result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveExpense = async () => {
+    const amount = Number(expenseForm.amount);
+    if (!expenseForm.merchant.trim()) {
+      toast.error("Merchant is required");
+      return;
+    }
+    if (!expenseForm.expenseDate) {
+      toast.error("Expense date is required");
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Amount must be greater than 0");
+      return;
+    }
+
+    const payload = {
+      expenseDate: expenseForm.expenseDate,
+      merchant: expenseForm.merchant.trim(),
+      category: expenseForm.category,
+      description: expenseForm.description.trim() || null,
+      amount,
+      isBillable: expenseForm.isBillable,
+      projectName: expenseForm.projectName.trim() || null,
+      receiptImageUrl: expenseForm.receiptImageUrl || null,
+      payPeriodId: expenseForm.payPeriodId || null,
+      status: "DRAFT",
+    };
+
+    setExpensesLoading(true);
+    try {
+      const res = await fetch(editingExpenseId ? `/api/expenses/${editingExpenseId}` : "/api/expenses", {
+        method: editingExpenseId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        toast.error("Failed to save expense");
+        return;
+      }
+      toast.success(editingExpenseId ? "Expense updated" : "Expense created");
+      setExpenseDialogOpen(false);
+      resetExpenseForm();
+      await refreshExpenses();
+    } finally {
+      setExpensesLoading(false);
+    }
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    setExpensesLoading(true);
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error("Failed to delete expense");
+        return;
+      }
+      toast.success("Expense deleted");
+      await refreshExpenses();
+    } finally {
+      setExpensesLoading(false);
+    }
+  };
+
+  const handleSubmitExpenseReport = async () => {
+    setExpensesLoading(true);
+    try {
+      const res = await fetch("/api/expenses/submit", { method: "POST" });
+      if (!res.ok) {
+        toast.error("Failed to submit expense report");
+        return;
+      }
+      const data = await res.json();
+      toast.success(`${data.count ?? 0} expense${data.count === 1 ? "" : "s"} submitted`);
+      setExpenseView("submitted");
+      await refreshExpenses();
+    } finally {
+      setExpensesLoading(false);
+    }
+  };
+
   useEffect(() => {
     setWeekTime(
       Object.fromEntries(
@@ -185,6 +368,10 @@ export function TimeTrackingClient({
   useEffect(() => {
     void refreshEntries();
   }, [refreshEntries]);
+
+  useEffect(() => {
+    void refreshExpenses();
+  }, [refreshExpenses]);
 
   const handleWeeklySubmit = async () => {
     const daysPayload = weekDays.map((day) => {
@@ -408,6 +595,50 @@ export function TimeTrackingClient({
       .filter((e) => dayKey(e.entryDate) === key && e.status !== "REJECTED")
       .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
   });
+  const draftExpenses = expenses.filter((e) => e.status === "DRAFT");
+  const totalExpenseCents = expenses.reduce((sum, e) => sum + (e.amountCents ?? 0), 0);
+  const billableExpenseCents = expenses
+    .filter((e) => e.isBillable)
+    .reduce((sum, e) => sum + (e.amountCents ?? 0), 0);
+  const submittedExpenseGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        label: string;
+        range: string;
+        count: number;
+        totalCents: number;
+        status: ExpenseStatus;
+      }
+    >();
+
+    for (const expense of expenses) {
+      const date = new Date(expense.expenseDate);
+      const periodKey = expense.payPeriodId ?? format(date, "yyyy-MM");
+      const periodLabel = expense.payPeriod
+        ? `${format(new Date(expense.payPeriod.startDate), "MMMM yyyy")} Expenses`
+        : `${format(date, "MMMM yyyy")} Expenses`;
+      const range = expense.payPeriod
+        ? `${formatDate(expense.payPeriod.startDate)} - ${formatDate(expense.payPeriod.endDate)}`
+        : `${format(date, "MMM d, yyyy")}`;
+
+      const current = groups.get(periodKey);
+      if (current) {
+        current.count += 1;
+        current.totalCents += expense.amountCents;
+      } else {
+        groups.set(periodKey, {
+          label: periodLabel,
+          range,
+          count: 1,
+          totalCents: expense.amountCents,
+          status: expense.status,
+        });
+      }
+    }
+
+    return Array.from(groups.values()).sort((a, b) => b.label.localeCompare(a.label));
+  }, [expenses]);
 
   const handleSaveDraft = () => {
     try {
@@ -1148,7 +1379,7 @@ export function TimeTrackingClient({
                 <h2 className="text-2xl font-semibold tracking-tight">Expenses</h2>
                 <p className="text-sm text-muted-foreground">Track and submit your business expenses</p>
               </div>
-              <Button className="gap-2">
+              <Button className="gap-2" onClick={openNewExpense}>
                 <Plus className="w-4 h-4" />
                 New Expense
               </Button>
@@ -1162,7 +1393,7 @@ export function TimeTrackingClient({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Draft Expenses</p>
-                    <p className="text-3xl font-semibold leading-tight">3</p>
+                    <p className="text-3xl font-semibold leading-tight">{draftExpenses.length}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1173,7 +1404,7 @@ export function TimeTrackingClient({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Amount</p>
-                    <p className="text-3xl font-semibold leading-tight">$168.49</p>
+                    <p className="text-3xl font-semibold leading-tight">{formatCurrencyFromCents(totalExpenseCents)}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1184,7 +1415,7 @@ export function TimeTrackingClient({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Billable</p>
-                    <p className="text-3xl font-semibold leading-tight">$113.50</p>
+                    <p className="text-3xl font-semibold leading-tight">{formatCurrencyFromCents(billableExpenseCents)}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1235,73 +1466,83 @@ export function TimeTrackingClient({
                 </Card>
 
                 <div className="space-y-3">
-                  {[
-                    {
-                      title: "Restaurant Downtown",
-                      note: "Client dinner meeting",
-                      amount: "$85.50",
-                      date: "3/4/2026",
-                      category: "Meals & Entertainment",
-                      billable: true,
-                      project: "Website Redesign",
-                    },
-                    {
-                      title: "Adobe Creative Cloud",
-                      note: "Monthly subscription",
-                      amount: "$54.99",
-                      date: "3/3/2026",
-                      category: "Software & Tools",
-                      billable: false,
-                      project: "",
-                    },
-                    {
-                      title: "Uber",
-                      note: "Trip to client office",
-                      amount: "$28.00",
-                      date: "3/2/2026",
-                      category: "Travel",
-                      billable: true,
-                      project: "Mobile App",
-                    },
-                  ].map((item) => (
-                    <Card key={item.title}>
+                  {expensesLoading ? (
+                    <Card>
+                      <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                        Loading expenses...
+                      </CardContent>
+                    </Card>
+                  ) : expenses.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                        No expenses yet. Add your first expense.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    expenses.map((item) => (
+                    <Card key={item.id}>
                       <CardContent className="pt-5 pb-5 flex items-start justify-between gap-4">
                         <div className="space-y-2">
-                          <p className="text-2xl font-semibold leading-tight">{item.title}</p>
-                          <p className="text-sm text-muted-foreground">{item.note}</p>
+                          <p className="text-2xl font-semibold leading-tight">{item.merchant}</p>
+                          <p className="text-sm text-muted-foreground">{item.description ?? "No description"}</p>
                           <div className="flex flex-wrap items-center gap-2 text-sm">
                             <span className="inline-flex items-center gap-1 text-muted-foreground">
                               <Calendar className="w-4 h-4" />
-                              {item.date}
+                              {formatDate(item.expenseDate)}
                             </span>
                             <Badge variant="secondary">{item.category}</Badge>
-                            {item.billable && (
+                            {item.isBillable && (
                               <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
                                 Billable
                               </Badge>
                             )}
-                            {item.project && (
-                              <span className="text-muted-foreground">Project: {item.project}</span>
+                            {item.projectName && (
+                              <span className="text-muted-foreground">Project: {item.projectName}</span>
+                            )}
+                            {item.payPeriod && (
+                              <span className="text-muted-foreground">
+                                Period: {formatDate(item.payPeriod.startDate)} - {formatDate(item.payPeriod.endDate)}
+                              </span>
                             )}
                           </div>
+                          {item.receiptImageUrl && (
+                            <a
+                              href={item.receiptImageUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View receipt image
+                            </a>
+                          )}
                         </div>
                         <div className="flex items-start gap-3">
                           <div className="text-right">
-                            <p className="text-4xl font-semibold leading-none">{item.amount}</p>
-                            <Badge variant="outline" className="mt-2">Draft</Badge>
+                            <p className="text-4xl font-semibold leading-none">{formatCurrencyFromCents(item.amountCents)}</p>
+                            <Badge variant="outline" className="mt-2">{item.status}</Badge>
                           </div>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => openEditExpense(item)}
+                            >
                               <Pencil className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteExpense(item.id)}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )))}
                 </div>
 
                 <Card className="border-blue-200 bg-blue-50/70">
@@ -1309,35 +1550,25 @@ export function TimeTrackingClient({
                     <div>
                       <p className="text-xl font-semibold">Ready to submit?</p>
                       <p className="text-sm text-muted-foreground">
-                        You have 3 draft expenses totaling $168.49
+                        You have {draftExpenses.length} draft expense{draftExpenses.length === 1 ? "" : "s"} totaling {formatCurrencyFromCents(draftExpenses.reduce((sum, e) => sum + e.amountCents, 0))}
                       </p>
                     </div>
-                    <Button>Submit Expense Report</Button>
+                    <Button onClick={handleSubmitExpenseReport} disabled={draftExpenses.length === 0 || expensesLoading}>
+                      Submit Expense Report
+                    </Button>
                   </CardContent>
                 </Card>
               </>
             ) : (
               <div className="space-y-3">
-                {[
-                  {
-                    label: "February 2026 Expenses",
-                    range: "1/31/2026 - 2/28/2026",
-                    count: "4 expenses",
-                    submitted: "Submitted 3/1/2026",
-                    total: "$1245.75",
-                    status: "Reimbursed",
-                    statusClass: "bg-violet-100 text-violet-800 border-violet-200",
-                  },
-                  {
-                    label: "January 2026 Expenses",
-                    range: "12/31/2025 - 1/30/2026",
-                    count: "3 expenses",
-                    submitted: "Submitted 2/1/2026",
-                    total: "$678.90",
-                    status: "Approved",
-                    statusClass: "bg-green-100 text-green-800 border-green-200",
-                  },
-                ].map((row) => (
+                {submittedExpenseGroups.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                      No submitted expense reports yet.
+                    </CardContent>
+                  </Card>
+                ) : (
+                  submittedExpenseGroups.map((row) => (
                   <Card key={row.label}>
                     <CardContent className="pt-5 pb-5 flex items-center justify-between gap-4">
                       <div className="space-y-1">
@@ -1347,25 +1578,175 @@ export function TimeTrackingClient({
                             <Calendar className="w-4 h-4" />
                             {row.range}
                           </span>
-                          <span>{row.count}</span>
-                          <span>{row.submitted}</span>
+                          <span>{row.count} expense{row.count === 1 ? "" : "s"}</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-semibold leading-none">{row.total}</p>
+                        <p className="text-4xl font-semibold leading-none">{formatCurrencyFromCents(row.totalCents)}</p>
                         <div className="mt-2 flex items-center justify-end gap-2">
-                          <Badge variant="outline" className={row.statusClass}>{row.status}</Badge>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              row.status === "REIMBURSED" && "bg-violet-100 text-violet-800 border-violet-200",
+                              row.status === "APPROVED" && "bg-green-100 text-green-800 border-green-200",
+                              row.status === "SUBMITTED" && "bg-blue-100 text-blue-800 border-blue-200",
+                              row.status === "REJECTED" && "bg-red-100 text-red-800 border-red-200"
+                            )}
+                          >
+                            {row.status}
+                          </Badge>
                           <ChevronDown className="w-4 h-4 text-muted-foreground" />
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )))
+                }
               </div>
             )}
           </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingExpenseId ? "Edit Expense" : "New Expense"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={expenseForm.expenseDate}
+                  onChange={(e) => setExpenseForm((prev) => ({ ...prev, expenseDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Amount (USD)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={expenseForm.amount}
+                  onChange={(e) => setExpenseForm((prev) => ({ ...prev, amount: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Merchant</Label>
+              <Input
+                placeholder="Vendor name"
+                value={expenseForm.merchant}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, merchant: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select
+                  value={expenseForm.category}
+                  onValueChange={(v) => setExpenseForm((prev) => ({ ...prev, category: v ?? prev.category }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Meals & Entertainment">Meals &amp; Entertainment</SelectItem>
+                    <SelectItem value="Software & Tools">Software &amp; Tools</SelectItem>
+                    <SelectItem value="Travel">Travel</SelectItem>
+                    <SelectItem value="Office Supplies">Office Supplies</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Pay Period</Label>
+                <Select
+                  value={expenseForm.payPeriodId || "__AUTO__"}
+                  onValueChange={(v) =>
+                    setExpenseForm((prev) => ({ ...prev, payPeriodId: v === "__AUTO__" ? "" : v ?? "" }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__AUTO__">Auto by date</SelectItem>
+                    {expensePayPeriods.map((period) => (
+                      <SelectItem key={period.id} value={period.id}>
+                        {formatDate(period.startDate)} - {formatDate(period.endDate)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Description</Label>
+              <Textarea
+                rows={2}
+                placeholder="What was this for?"
+                value={expenseForm.description}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, description: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Project (optional)</Label>
+              <Input
+                placeholder="Project name"
+                value={expenseForm.projectName}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, projectName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Receipt Image</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleReceiptUpload(file);
+                }}
+              />
+              {expenseForm.receiptImageUrl && (
+                <a
+                  href={expenseForm.receiptImageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Preview uploaded receipt
+                </a>
+              )}
+            </div>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={expenseForm.isBillable}
+                onChange={(e) => setExpenseForm((prev) => ({ ...prev, isBillable: e.target.checked }))}
+              />
+              Billable expense
+            </label>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExpenseDialogOpen(false);
+                resetExpenseForm();
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSaveExpense} disabled={expensesLoading}>
+              {editingExpenseId ? "Save Changes" : "Create Expense"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Manual entry dialog */}
       <Dialog open={manualOpen} onOpenChange={setManualOpen}>
