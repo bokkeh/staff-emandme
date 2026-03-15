@@ -111,9 +111,17 @@ export default async function EmployeeProfilePage({
         {/* Profile card */}
         <div className="lg:col-span-1 space-y-4">
           <Card>
-            {currentUserRole === "ADMIN" && (
-              <div className="flex justify-end px-6 pt-4 pb-0">
-                <TeamMemberEdit employee={employee} allEmployees={allEmployees} />
+            {(currentUserRole === "ADMIN" || currentUserRole === "MANAGER") && (
+              <div className="flex justify-end gap-2 px-6 pt-4 pb-0">
+                <Link
+                  href={`/timesheets/${employee.id}`}
+                  className="inline-flex items-center gap-1.5 text-xs rounded-md border border-input bg-background px-3 py-1.5 font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  Timesheet
+                </Link>
+                {currentUserRole === "ADMIN" && (
+                  <TeamMemberEdit employee={employee} allEmployees={allEmployees} />
+                )}
               </div>
             )}
             <CardContent className="pt-6">
