@@ -12,6 +12,7 @@ import Link from "next/link";
 import { ArrowLeft, Mail, Phone, Calendar, Cake, DollarSign } from "lucide-react";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { TeamMemberEdit } from "./team-member-edit";
+import { TimesheetManager } from "@/app/(app)/timesheets/[employeeId]/timesheet-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -56,24 +57,20 @@ export default async function EmployeeProfilePage({
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const recentEntries = await prisma.timeEntry.findMany({
-    where: {
-      employeeId: id,
-      entryDate: { gte: weekStart, lte: weekEnd },
-    },
-    include: { category: true },
-    orderBy: { startTime: "desc" },
-    take: 10,
-  });
+  const [recentEntries, categories, currentPeriod] = await Promise.all([
+    prisma.timeEntry.findMany({
+      where: { employeeId: id, entryDate: { gte: weekStart, lte: weekEnd } },
+      select: { durationMinutes: true },
+    }),
+    prisma.timeCategory.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.payPeriod.findFirst({
+      where: { status: "OPEN" },
+      orderBy: { startDate: "desc" },
+    }),
+  ]);
 
   const weekMinutes = recentEntries
-    .filter((e: { durationMinutes: number | null }) => e.durationMinutes)
-    .reduce((sum: number, e: { durationMinutes: number | null }) => sum + (e.durationMinutes ?? 0), 0);
-
-  const currentPeriod = await prisma.payPeriod.findFirst({
-    where: { status: "OPEN" },
-    orderBy: { startDate: "desc" },
-  });
+    .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
 
   const periodSummary = currentPeriod
     ? await prisma.payrollSummary.findUnique({
@@ -111,17 +108,9 @@ export default async function EmployeeProfilePage({
         {/* Profile card */}
         <div className="lg:col-span-1 space-y-4">
           <Card>
-            {(currentUserRole === "ADMIN" || currentUserRole === "MANAGER") && (
-              <div className="flex justify-end gap-2 px-6 pt-4 pb-0">
-                <Link
-                  href={`/timesheets/${employee.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs rounded-md border border-input bg-background px-3 py-1.5 font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  Timesheet
-                </Link>
-                {currentUserRole === "ADMIN" && (
-                  <TeamMemberEdit employee={employee} allEmployees={allEmployees} />
-                )}
+            {currentUserRole === "ADMIN" && (
+              <div className="flex justify-end px-6 pt-4 pb-0">
+                <TeamMemberEdit employee={employee} allEmployees={allEmployees} />
               </div>
             )}
             <CardContent className="pt-6">
@@ -303,53 +292,12 @@ export default async function EmployeeProfilePage({
             </Card>
           )}
 
-          {/* Recent time entries */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">This Week&apos;s Time Entries</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {recentEntries.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6">No entries this week.</p>
-              ) : (
-                <div className="space-y-2">
-                  {recentEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between text-sm py-2 border-b last:border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-xs shrink-0",
-                            entry.status === "APPROVED" && "bg-green-50 text-green-700 border-green-200",
-                            entry.status === "SUBMITTED" && "bg-blue-50 text-blue-700 border-blue-200",
-                            entry.status === "DRAFT" && "bg-muted text-muted-foreground",
-                            entry.status === "REJECTED" && "bg-red-50 text-red-700 border-red-200"
-                          )}
-                        >
-                          {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
-                        </Badge>
-                        <div>
-                          <p className="font-medium">{entry.category.name}</p>
-                          {entry.note && (
-                            <p className="text-xs text-muted-foreground">{entry.note}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className="font-medium">{formatMinutes(entry.durationMinutes ?? 0)}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(entry.entryDate)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Timesheet */}
+          <TimesheetManager
+            targetEmployeeId={id}
+            categories={categories}
+            userRole={currentUserRole ?? "STAFF"}
+          />
         </div>
       </div>
     </div>
