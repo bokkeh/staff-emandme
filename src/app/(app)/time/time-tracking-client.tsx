@@ -704,6 +704,9 @@ export function TimeTrackingClient({
               <p className="text-sm text-muted-foreground">Track your weekly hours</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setSelectedWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
+                Current Week
+              </Button>
               <Button variant="outline" size="sm" className="gap-2" onClick={handleExportWeek}>
                 <Download className="w-4 h-4" />
                 Export
@@ -712,90 +715,30 @@ export function TimeTrackingClient({
                 <Save className="w-4 h-4" />
                 Save Draft
               </Button>
-              <Button size="sm" className="gap-2" onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId}>
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => setManualOpen(true)}>
+                <Plus className="w-4 h-4" />
+                Add Entry
+              </Button>
+              <Button size="sm" className="gap-2 bg-[#E68D83] hover:bg-[#d4786e] text-white border-0" onClick={handleWeeklySubmit} disabled={loading || !weekCategoryId}>
                 <Send className="w-4 h-4" />
                 {isEditingWeekSubmission ? "Resubmit" : "Submit"}
               </Button>
             </div>
           </div>
 
-          <Card>
-            <CardContent className="pt-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8"
-                    onClick={() => setSelectedWeekStart((prev) => addDays(prev, -7))}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="rounded-md border bg-muted/20 px-3 py-1.5 text-sm font-medium">
-                    {weekLabel}
-                  </div>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8"
-                    onClick={() => setSelectedWeekStart((prev) => addDays(prev, 7))}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-                >
-                  Current Week
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardContent className="pt-5 pb-4">
-                <p className="text-sm text-muted-foreground">Total Hours</p>
-                <p className="text-3xl font-semibold mt-1">{(totalWeekMinutes / 60).toFixed(1)}h</p>
-                <p className="text-xs text-muted-foreground mt-1">This week</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-5 pb-4">
-                <p className="text-sm text-muted-foreground">Submitted Hours</p>
-                <p className="text-3xl font-semibold mt-1 text-emerald-600">{(submittedMinutes / 60).toFixed(1)}h</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {totalWeekMinutes > 0 ? Math.round((submittedMinutes / totalWeekMinutes) * 100) : 0}% of total
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-5 pb-4">
-                <p className="text-sm text-muted-foreground">Approved Hours</p>
-                <p className="text-3xl font-semibold mt-1">{(approvedMinutes / 60).toFixed(1)}h</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {totalWeekMinutes > 0 ? Math.round((approvedMinutes / totalWeekMinutes) * 100) : 0}% of total
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Weekly Entries</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setManualOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Entry
-            </Button>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl border border-border/60 bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-2xl font-semibold mt-0.5">{(totalWeekMinutes / 60).toFixed(1)}h</p>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Submitted</p>
+              <p className="text-2xl font-semibold mt-0.5 text-[#E68D83]">{(submittedMinutes / 60).toFixed(1)}h</p>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">Approved</p>
+              <p className="text-2xl font-semibold mt-0.5 text-[#006965]">{(approvedMinutes / 60).toFixed(1)}h</p>
+            </div>
           </div>
 
       {submittedWeekEntries.length > 0 && (
@@ -990,101 +933,128 @@ export function TimeTrackingClient({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Weekly Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            {weekDays.map((day, idx) => (
-              <div key={format(day, "yyyy-MM-dd")} className="rounded-lg border bg-muted/10 p-3">
-                <p className="text-sm font-medium">{format(day, "EEE")}</p>
-                <p className="text-xs text-muted-foreground">{format(day, "MMM d")}</p>
-                <p className="text-xl font-semibold mt-2 text-blue-600">
-                  {(dayTotals[idx] / 60).toFixed(1)}h
-                </p>
-              </div>
-            ))}
+      {/* ── Weekly Record ── */}
+      <div className="rounded-2xl overflow-hidden shadow-md border border-border/40 bg-card">
+        {/* Header */}
+        <div className="bg-[#14211f] px-5 pt-5 pb-4">
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#E68D83] mb-3">
+            Weekly Record
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              onClick={() => setSelectedWeekStart((prev) => addDays(prev, -7))}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-3 text-sm overflow-hidden">
+              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">
+                {format(addDays(selectedWeekStart, -7), "MMM d")}
+              </span>
+              <span className="text-white font-semibold text-sm text-center">
+                {format(weekDays[0], "MMM d")} — {format(weekDays[6], "MMM d, yyyy")}
+              </span>
+              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">
+                {format(addDays(selectedWeekStart, 7), "MMM d")}
+              </span>
+            </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              onClick={() => setSelectedWeekStart((prev) => addDays(prev, 7))}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-center text-white/35 text-[11px] mt-2">
+            {totalWeekMinutes > 0 ? `${formatMinutes(totalWeekMinutes)} logged this week` : "No entries yet"}
+          </p>
+        </div>
 
-      {false && (Object.keys(byDay).length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground text-sm">
-            No time entries this week. Clock in or add a manual entry to get started.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {Object.entries(byDay)
-            .sort(([a], [b]) => b.localeCompare(a))
-            .map(([day, dayEntries]) => {
-              const dayTotal = dayEntries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
-              return (
-                <Card key={day}>
-                  <CardHeader className="pb-2 pt-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium">
-                        {format(parseISO(day), "EEEE, MMM d")}
-                      </CardTitle>
-                      <span className="text-sm text-muted-foreground font-medium">
-                        {formatMinutes(dayTotal)}
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2">
+        {/* Day rows */}
+        <div className="divide-y divide-border/60">
+          {weekDays.map((day, idx) => {
+            const key = format(day, "yyyy-MM-dd");
+            const dayEntries = byDay[key] ?? [];
+            const isWeekend = idx >= 5;
+            // Simple geometric decorations per day
+            const decorations: React.ReactNode[] = [
+              <svg key="d0" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none"><circle cx="44" cy="12" r="14" stroke="white" strokeWidth="2.5" /></svg>,
+              <svg key="d1" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none"><circle cx="36" cy="10" r="3" fill="white" /><circle cx="44" cy="20" r="3" fill="white" /><circle cx="44" cy="10" r="3" fill="white" /><circle cx="40" cy="16" r="3" fill="white" /></svg>,
+              <svg key="d2" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none"><polygon points="28,4 52,48 4,48" stroke="white" strokeWidth="2.5" strokeLinejoin="round" /></svg>,
+              <svg key="d3" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">{([14,28,42] as number[]).flatMap((x) => ([14,28,42] as number[]).map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.5" fill="white" />))}</svg>,
+              <svg key="d4" className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 56 56" fill="none"><line x1="0" y1="20" x2="20" y2="0" stroke="white" strokeWidth="3" /><line x1="10" y1="46" x2="46" y2="10" stroke="white" strokeWidth="3" /><line x1="36" y1="56" x2="56" y2="36" stroke="white" strokeWidth="3" /></svg>,
+              <svg key="d5" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none"><line x1="38" y1="4" x2="52" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="52" y1="4" x2="38" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>,
+              <svg key="d6" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none"><path d="M44 8 A18 18 0 1 1 44 48 A12 12 0 1 0 44 8 Z" fill="white" /></svg>,
+            ];
+
+            return (
+              <div
+                key={key}
+                className={cn(
+                  "flex items-start gap-4 px-5 py-4 transition-colors",
+                  isWeekend && dayEntries.length === 0 ? "opacity-45" : "hover:bg-muted/30"
+                )}
+              >
+                {/* Day tile */}
+                <div className="relative w-[52px] h-[52px] rounded-xl overflow-hidden flex flex-col items-center justify-center shrink-0 bg-[#14211f]">
+                  {decorations[idx]}
+                  <span className="text-white text-[11px] font-bold uppercase tracking-wider z-10 leading-none mb-0.5">
+                    {format(day, "EEE")}
+                  </span>
+                  <span className="text-white/40 text-[9px] z-10 leading-none">{format(day, "d")}</span>
+                </div>
+
+                {/* Entry content */}
+                <div className="flex-1 min-w-0 self-center">
+                  {dayEntries.length === 0 ? (
+                    <span className="text-muted-foreground/30 font-semibold text-base tracking-[0.3em]">— — —</span>
+                  ) : (
+                    <div className="space-y-2.5">
                       {dayEntries.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-sm">{entry.category.name}</span>
+                        <div key={entry.id} className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            {entry.durationMinutes ? (
+                              <p className="text-sm font-semibold text-foreground leading-tight">
+                                {`${String(Math.floor(entry.durationMinutes / 60)).padStart(2, "0")}:${String(entry.durationMinutes % 60).padStart(2, "0")} hours`}
+                              </p>
+                            ) : null}
+                            {entry.startTime && entry.endTime && (
+                              <p className="text-xs text-muted-foreground leading-snug">
+                                {format(new Date(entry.startTime), "h:mm a")} to {format(new Date(entry.endTime), "h:mm a")}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              <Badge variant="outline" className="text-[10px] h-[18px] px-1.5 border-border/60 text-muted-foreground">
+                                {entry.category.name}
+                              </Badge>
                               <Badge
                                 variant="outline"
                                 className={cn(
-                                  "text-xs",
-                                  entry.status === "APPROVED" && "bg-green-50 text-green-700 border-green-200",
-                                  entry.status === "SUBMITTED" && "bg-blue-50 text-blue-700 border-blue-200",
-                                  entry.status === "DRAFT" && "bg-muted text-muted-foreground",
-                                  entry.status === "REJECTED" && "bg-red-50 text-red-700 border-red-200"
+                                  "text-[10px] h-[18px] px-1.5",
+                                  entry.status === "APPROVED" && "bg-[#006965]/10 text-[#006965] border-[#006965]/30",
+                                  entry.status === "SUBMITTED" && "bg-[#E68D83]/10 text-[#c4736a] border-[#E68D83]/40",
+                                  entry.status === "DRAFT" && "bg-muted text-muted-foreground border-border",
+                                  entry.status === "REJECTED" && "bg-red-50 text-red-600 border-red-200"
                                 )}
                               >
                                 {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
                               </Badge>
-                              {entry.source === "MANUAL" && (
-                                <Badge variant="outline" className="text-xs">Manual</Badge>
-                              )}
                             </div>
-                            {entry.note && (
-                              <p className="text-xs text-muted-foreground mt-0.5">{entry.note}</p>
-                            )}
-                            {entry.startTime && entry.endTime && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
-                              </p>
-                            )}
                             {entry.rejectionReason && (
-                              <p className="text-xs text-red-600 mt-0.5">
-                                Rejected: {entry.rejectionReason}
-                              </p>
+                              <p className="text-[10px] text-red-500 mt-0.5">↩ {entry.rejectionReason}</p>
                             )}
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-sm font-semibold">
-                              {formatMinutes(entry.durationMinutes ?? 0)}
-                            </p>
                           </div>
                           {(entry.status === "DRAFT" || entry.status === "REJECTED") && (
-                            <div className="flex gap-1 shrink-0">
+                            <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
                               {entry.status === "DRAFT" && (
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="w-7 h-7 text-muted-foreground hover:text-blue-600"
+                                  className="w-7 h-7 text-muted-foreground/60 hover:text-[#E68D83]"
                                   onClick={() => handleSubmitEntry(entry.id)}
                                   title="Submit for approval"
                                 >
@@ -1094,9 +1064,9 @@ export function TimeTrackingClient({
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="w-7 h-7 text-muted-foreground hover:text-destructive"
+                                className="w-7 h-7 text-muted-foreground/60 hover:text-destructive"
                                 onClick={() => handleDeleteEntry(entry.id)}
-                                title="Delete entry"
+                                title="Delete"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
@@ -1105,12 +1075,13 @@ export function TimeTrackingClient({
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      ))}
+      </div>
         </TabsContent>
 
         <TabsContent value="previous-timesheets" className="pt-4">

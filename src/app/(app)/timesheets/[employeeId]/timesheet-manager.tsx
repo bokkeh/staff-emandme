@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { addDays, format, startOfWeek } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -41,14 +40,60 @@ type TimeEntry = {
   source?: string | null;
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  APPROVED: "bg-green-50 text-green-700 border-green-200",
-  SUBMITTED: "bg-blue-50 text-blue-700 border-blue-200",
-  DRAFT: "bg-muted text-muted-foreground",
-  REJECTED: "bg-red-50 text-red-700 border-red-200",
+const STATUS_BADGE: Record<string, string> = {
+  APPROVED: "bg-[#006965]/10 text-[#006965] border-[#006965]/30",
+  SUBMITTED: "bg-[#E68D83]/10 text-[#c4736a] border-[#E68D83]/40",
+  DRAFT: "bg-muted text-muted-foreground border-border",
+  REJECTED: "bg-red-50 text-red-600 border-red-200",
 };
 
-const dayKey = (date: string | Date) => new Date(date).toISOString().slice(0, 10);
+// Subtle geometric SVG decorations per day (Mon–Sun, index 0–6)
+const DAY_DECORATIONS: React.ReactNode[] = [
+  // Mon – circle ring
+  <svg key="mon" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    <circle cx="44" cy="12" r="14" stroke="white" strokeWidth="2.5" />
+  </svg>,
+  // Tue – three dots
+  <svg key="tue" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    <circle cx="36" cy="12" r="3" fill="white" />
+    <circle cx="44" cy="22" r="3" fill="white" />
+    <circle cx="44" cy="10" r="3" fill="white" />
+    <circle cx="40" cy="17" r="3" fill="white" />
+  </svg>,
+  // Wed – triangle
+  <svg key="wed" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    <polygon points="28,4 52,48 4,48" stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
+  </svg>,
+  // Thu – dot grid
+  <svg key="thu" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    {[14, 28, 42].flatMap((x) =>
+      [14, 28, 42].map((y) => (
+        <circle key={`${x}-${y}`} cx={x} cy={y} r="2.5" fill="white" />
+      ))
+    )}
+  </svg>,
+  // Fri – diagonal stripes
+  <svg key="fri" className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 56 56" fill="none">
+    <line x1="0" y1="20" x2="20" y2="0" stroke="white" strokeWidth="3" />
+    <line x1="10" y1="46" x2="46" y2="10" stroke="white" strokeWidth="3" />
+    <line x1="36" y1="56" x2="56" y2="36" stroke="white" strokeWidth="3" />
+  </svg>,
+  // Sat – X cross
+  <svg key="sat" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    <line x1="38" y1="4" x2="52" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+    <line x1="52" y1="4" x2="38" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>,
+  // Sun – crescent / arc
+  <svg key="sun" className="absolute inset-0 w-full h-full opacity-[0.15]" viewBox="0 0 56 56" fill="none">
+    <path d="M44 8 A18 18 0 1 1 44 48 A12 12 0 1 0 44 8 Z" fill="white" />
+  </svg>,
+];
+
+function formatDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} hours`;
+}
 
 type DayInput = { hours: string; minutes: string };
 
@@ -68,8 +113,10 @@ export function TimesheetManager({
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Weekly form state
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // Bulk fill dialog state
+  const [fillWeekOpen, setFillWeekOpen] = useState(false);
   const emptyWeekTime = () =>
     Object.fromEntries(weekDays.map((d) => [format(d, "yyyy-MM-dd"), { hours: "", minutes: "00" } as DayInput]));
   const [weekCategoryId, setWeekCategoryId] = useState(activeCategories[0]?.id ?? categories[0]?.id ?? "");
@@ -87,7 +134,9 @@ export function TimesheetManager({
     note: "",
   });
 
-  const weekLabel = `${format(weekDays[0], "MMM d")} – ${format(weekDays[6], "MMM d, yyyy")}`;
+  const prevWeekLabel = format(addDays(weekStart, -7), "MMM d");
+  const nextWeekLabel = format(addDays(weekStart, 7), "MMM d");
+  const currentWeekLabel = `${format(weekDays[0], "MMM d")} — ${format(weekDays[6], "MMM d, yyyy")}`;
 
   const refresh = useCallback(async () => {
     const start = format(weekStart, "yyyy-MM-dd");
@@ -100,17 +149,15 @@ export function TimesheetManager({
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  // Reset week form when week changes
   useEffect(() => {
     setWeekTime(emptyWeekTime());
     setWeekNote("");
     setWeekCategoryId(activeCategories[0]?.id ?? categories[0]?.id ?? "");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart]);
 
-  // Weekly totals from existing entries (to show alongside inputs)
   const byDay = entries.reduce<Record<string, TimeEntry[]>>((acc, e) => {
-    const k = dayKey(e.entryDate);
+    const k = new Date(e.entryDate).toISOString().slice(0, 10);
     if (!acc[k]) acc[k] = [];
     acc[k].push(e);
     return acc;
@@ -120,7 +167,7 @@ export function TimesheetManager({
     .filter((e) => e.status !== "REJECTED")
     .reduce((sum, e) => sum + (e.durationMinutes ?? 0), 0);
 
-  // --- Weekly submit ---
+  // --- Bulk weekly submit ---
   const handleWeeklySubmit = async () => {
     if (!weekCategoryId) { toast.error("Select a category"); return; }
     const daysPayload = weekDays.map((day) => {
@@ -128,7 +175,6 @@ export function TimesheetManager({
       const d = weekTime[key] ?? { hours: "", minutes: "00" };
       const h = d.hours ? Number(d.hours) : 0;
       const m = Number(d.minutes || "0");
-      // Round to nearest 15 minutes
       const total = Math.round((h * 60 + m) / 15) * 15;
       return { entryDate: key, minutes: total };
     });
@@ -138,7 +184,6 @@ export function TimesheetManager({
     }
     setLoading(true);
     try {
-      // Use PUT to replace existing manual entries for this week
       const res = await fetch("/api/time/timesheet-week", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -158,6 +203,7 @@ export function TimesheetManager({
       toast.success(`${data.count} ${data.count === 1 ? "entry" : "entries"} saved`);
       setWeekTime(emptyWeekTime());
       setWeekNote("");
+      setFillWeekOpen(false);
       await refresh();
     } finally {
       setLoading(false);
@@ -181,7 +227,7 @@ export function TimesheetManager({
     setEditingEntry(entry);
     setForm({
       categoryId: entry.categoryId,
-      entryDate: dayKey(entry.entryDate),
+      entryDate: new Date(entry.entryDate).toISOString().slice(0, 10),
       startTime: entry.startTime ? format(new Date(entry.startTime), "HH:mm") : "",
       endTime: entry.endTime ? format(new Date(entry.endTime), "HH:mm") : "",
       note: entry.note ?? "",
@@ -242,175 +288,249 @@ export function TimesheetManager({
 
   return (
     <>
-      {/* Weekly entry card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-1">
-              <Button size="icon" variant="ghost" className="w-7 h-7"
-                onClick={() => setWeekStart((d) => addDays(d, -7))}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-sm font-medium">{weekLabel}</span>
-              <Button size="icon" variant="ghost" className="w-7 h-7"
-                onClick={() => setWeekStart((d) => addDays(d, 7))}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+      {/* Weekly Record card */}
+      <div className="rounded-2xl overflow-hidden shadow-md border border-border/40 bg-card">
+
+        {/* ── Header ── */}
+        <div className="bg-[#14211f] px-5 pt-5 pb-4">
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#E68D83] mb-3">
+            Weekly Record
+          </p>
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              onClick={() => setWeekStart((d) => addDays(d, -7))}
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+
+            <div className="flex items-center gap-3 text-sm min-w-0 overflow-hidden">
+              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">{prevWeekLabel}</span>
+              <span className="text-white font-semibold text-sm text-center leading-tight">
+                {currentWeekLabel}
+              </span>
+              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">{nextWeekLabel}</span>
             </div>
-            <span className="text-sm text-muted-foreground">{formatMinutes(totalMinutes)} logged</span>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              onClick={() => setWeekStart((d) => addDays(d, 7))}
+            >
+              <ChevronRight className="w-5 h-5" />
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent className="pt-0 space-y-4">
-          {/* Category + Note */}
-          {isAdminOrManager && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Category</Label>
-                  <Select
-                    value={weekCategoryId}
-                    onValueChange={(v) => setWeekCategoryId(v ?? weekCategoryId)}
-                  >
-                    <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
-                          {c.name}{!c.isActive ? " (inactive)" : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Note (optional)</Label>
-                  <Input
-                    className="h-8 text-sm"
-                    placeholder="e.g. project name"
-                    value={weekNote}
-                    onChange={(e) => setWeekNote(e.target.value)}
-                  />
-                </div>
-              </div>
 
-              {/* Day grid */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {weekDays.map((day) => {
-                  const key = format(day, "yyyy-MM-dd");
-                  const d = weekTime[key] ?? { hours: "", minutes: "00" };
-                  const dayTotal = (byDay[key] ?? [])
-                    .filter((e) => e.status !== "REJECTED")
-                    .reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+          <p className="text-center text-white/35 text-[11px] mt-2">
+            {totalMinutes > 0 ? `${formatMinutes(totalMinutes)} logged this week` : "No entries yet"}
+          </p>
+        </div>
 
-                  return (
-                    <div key={key} className="flex flex-col items-center gap-1">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {format(day, "EEE")}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{format(day, "d")}</span>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={24}
-                        step={0.25}
-                        placeholder="0"
-                        className="h-9 text-center text-sm px-1"
-                        value={d.hours}
-                        onChange={(e) =>
-                          setWeekTime((prev) => ({
-                            ...prev,
-                            [key]: { ...d, hours: e.target.value },
-                          }))
-                        }
-                      />
-                      {dayTotal > 0 && (
-                        <span className="text-xs text-muted-foreground">{formatMinutes(dayTotal)}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between items-center pt-1">
-                <p className="text-xs text-muted-foreground">Enter decimal hours per day (e.g. 7.5 = 7h 30m). Rounds to nearest 15 min.</p>
-                <Button size="sm" className="gap-1.5" onClick={handleWeeklySubmit} disabled={loading}>
-                  <Save className="w-3.5 h-3.5" />
-                  Save Week
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Detailed entries card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Entries This Week</CardTitle>
-            {isAdminOrManager && (
-              <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={openAdd}>
-                <Plus className="w-3 h-3" />
-                Add Single Entry
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {weekDays.map((day) => {
+        {/* ── Day rows ── */}
+        <div className="divide-y divide-border/60">
+          {weekDays.map((day, idx) => {
             const key = format(day, "yyyy-MM-dd");
             const dayEntries = byDay[key] ?? [];
-            if (dayEntries.length === 0) return null;
+            const isWeekend = idx >= 5;
 
             return (
-              <div key={key} className="mb-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                  {format(day, "EEE, MMM d")}
-                </p>
-                <div className="space-y-1">
-                  {dayEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between text-sm px-3 py-2 rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="outline" className={cn("text-xs shrink-0", STATUS_STYLES[entry.status] ?? "")}>
-                          {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
-                        </Badge>
-                        <span className="font-medium truncate">{entry.category.name}</span>
-                        {entry.startTime && entry.endTime && (
-                          <span className="text-muted-foreground text-xs shrink-0 hidden sm:inline">
-                            {formatTime(new Date(entry.startTime))} – {formatTime(new Date(entry.endTime))}
-                          </span>
-                        )}
-                        {entry.note && (
-                          <span className="text-muted-foreground text-xs truncate hidden md:inline">· {entry.note}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        <span className="text-sm font-medium tabular-nums">{formatMinutes(entry.durationMinutes ?? 0)}</span>
-                        {isAdminOrManager && (
-                          <>
-                            <Button size="icon" variant="ghost" className="w-6 h-6" onClick={() => openEdit(entry)}>
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="w-6 h-6 text-destructive hover:text-destructive" onClick={() => deleteEntry(entry.id)}>
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+              <div
+                key={key}
+                className={cn(
+                  "flex items-start gap-4 px-5 py-4 transition-colors",
+                  isWeekend && dayEntries.length === 0 ? "opacity-45" : "hover:bg-muted/30"
+                )}
+              >
+                {/* Day tile */}
+                <div className="relative w-[52px] h-[52px] rounded-xl overflow-hidden flex flex-col items-center justify-center shrink-0 bg-[#14211f]">
+                  {DAY_DECORATIONS[idx]}
+                  <span className="text-white text-[11px] font-bold uppercase tracking-wider z-10 leading-none mb-0.5">
+                    {format(day, "EEE")}
+                  </span>
+                  <span className="text-white/40 text-[9px] z-10 leading-none">{format(day, "d")}</span>
+                </div>
+
+                {/* Entry content */}
+                <div className="flex-1 min-w-0 self-center">
+                  {dayEntries.length === 0 ? (
+                    <span className="text-muted-foreground/30 font-semibold text-base tracking-[0.3em]">
+                      — — —
+                    </span>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {dayEntries.map((entry) => (
+                        <div key={entry.id} className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            {entry.durationMinutes ? (
+                              <p className="text-sm font-semibold text-foreground leading-tight">
+                                {formatDuration(entry.durationMinutes)}
+                              </p>
+                            ) : null}
+
+                            {entry.startTime && entry.endTime && (
+                              <p className="text-xs text-muted-foreground leading-snug">
+                                {format(new Date(entry.startTime), "h:mm a")} to{" "}
+                                {format(new Date(entry.endTime), "h:mm a")}
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] h-[18px] px-1.5 border-border/60 text-muted-foreground"
+                              >
+                                {entry.category.name}
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className={cn("text-[10px] h-[18px] px-1.5", STATUS_BADGE[entry.status] ?? STATUS_BADGE.DRAFT)}
+                              >
+                                {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
+                              </Badge>
+                              {entry.note && (
+                                <span className="text-[10px] text-muted-foreground/70 truncate max-w-[120px]">
+                                  · {entry.note}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {isAdminOrManager && (
+                            <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="w-7 h-7 text-muted-foreground/60 hover:text-foreground"
+                                onClick={() => openEdit(entry)}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="w-7 h-7 text-muted-foreground/60 hover:text-destructive"
+                                onClick={() => deleteEntry(entry.id)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             );
           })}
-          {entries.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No entries this week.</p>
-          )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Single entry dialog */}
+        {/* ── Footer actions ── */}
+        {isAdminOrManager && (
+          <div className="px-5 py-3.5 border-t border-border/50 flex items-center justify-between bg-muted/20">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-8"
+              onClick={() => setFillWeekOpen(true)}
+            >
+              <Save className="w-3.5 h-3.5" />
+              Fill Week
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 h-8 bg-[#E68D83] hover:bg-[#d4786e] text-white border-0 shadow-sm"
+              onClick={openAdd}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Entry
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Bulk week fill dialog ── */}
+      <Dialog open={fillWeekOpen} onOpenChange={setFillWeekOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Fill Week — {format(weekDays[0], "MMM d")} to {format(weekDays[6], "MMM d")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Category</Label>
+                <Select value={weekCategoryId} onValueChange={(v) => setWeekCategoryId(v ?? weekCategoryId)}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                        {c.name}{!c.isActive ? " (inactive)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Note (optional)</Label>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="e.g. project name"
+                  value={weekNote}
+                  onChange={(e) => setWeekNote(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1.5">
+              {weekDays.map((day) => {
+                const key = format(day, "yyyy-MM-dd");
+                const d = weekTime[key] ?? { hours: "", minutes: "00" };
+                const dayTotal = (byDay[key] ?? [])
+                  .filter((e) => e.status !== "REJECTED")
+                  .reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+
+                return (
+                  <div key={key} className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase">{format(day, "EEE")}</span>
+                    <span className="text-[10px] text-muted-foreground">{format(day, "d")}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={24}
+                      step={0.25}
+                      placeholder="0"
+                      className="h-9 text-center text-sm px-1"
+                      value={d.hours}
+                      onChange={(e) =>
+                        setWeekTime((prev) => ({
+                          ...prev,
+                          [key]: { ...d, hours: e.target.value },
+                        }))
+                      }
+                    />
+                    {dayTotal > 0 && (
+                      <span className="text-[10px] text-muted-foreground">{formatMinutes(dayTotal)}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">Enter decimal hours per day (e.g. 7.5 = 7h 30m). Rounds to nearest 15 min.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFillWeekOpen(false)} disabled={loading}>Cancel</Button>
+            <Button onClick={handleWeeklySubmit} disabled={loading} className="bg-[#E68D83] hover:bg-[#d4786e] text-white border-0">
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              Save Week
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Single entry dialog ── */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -435,26 +555,51 @@ export function TimesheetManager({
             </div>
             <div className="space-y-1.5">
               <Label>Date</Label>
-              <Input type="date" value={form.entryDate} onChange={(e) => setForm((f) => ({ ...f, entryDate: e.target.value }))} />
+              <Input
+                type="date"
+                value={form.entryDate}
+                onChange={(e) => setForm((f) => ({ ...f, entryDate: e.target.value }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Start Time</Label>
-                <Input type="time" value={form.startTime} onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))} />
+                <Input
+                  type="time"
+                  value={form.startTime}
+                  onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>End Time</Label>
-                <Input type="time" value={form.endTime} onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))} />
+                <Input
+                  type="time"
+                  value={form.endTime}
+                  onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+                />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label>Note</Label>
-              <Textarea rows={2} placeholder="Optional note" value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} />
+              <Textarea
+                rows={2}
+                placeholder="Optional note"
+                value={form.note}
+                onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={saveEntry} disabled={loading}>{editingEntry ? "Save Changes" : "Add Entry"}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveEntry}
+              disabled={loading}
+              className="bg-[#E68D83] hover:bg-[#d4786e] text-white border-0"
+            >
+              {editingEntry ? "Save Changes" : "Add Entry"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
