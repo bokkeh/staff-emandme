@@ -23,8 +23,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { cn, displayName } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { cn, displayName, formatDate } from "@/lib/utils";
+import { Plus, Pencil, Trash2, Check, X, Lock, ChevronRight } from "lucide-react";
+
+type PayPeriodLike = {
+  id: string;
+  startDate: Date | string;
+  endDate: Date | string;
+  type: string;
+  status: string;
+};
 
 type AppSettingsLike = {
   overtimeWeeklyHours?: number | null;
@@ -62,14 +70,17 @@ export function SettingsClient({
   settings: initialSettings,
   categories: initialCategories,
   employees: initialEmployees,
+  payPeriods: initialPayPeriods,
 }: {
   settings: AppSettingsLike | null;
   categories: TimeCategoryLike[];
   employees: PartialEmployee[];
+  payPeriods: PayPeriodLike[];
 }) {
   const [settings, setSettings] = useState(initialSettings);
   const [categories, setCategories] = useState(initialCategories);
   const [employees, setEmployees] = useState(initialEmployees);
+  const [payPeriods, setPayPeriods] = useState(initialPayPeriods);
   const [loading, setLoading] = useState(false);
 
   // Category add
@@ -241,6 +252,48 @@ export function SettingsClient({
     }
   };
 
+  const closePeriod = async (id: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/payroll/periods/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "CLOSED" }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? "Failed to close period");
+        return;
+      }
+      const updated = await res.json();
+      setPayPeriods((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      toast.success("Pay period closed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createNextPeriod = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/payroll/periods", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? "Failed to create period");
+        return;
+      }
+      const created = await res.json();
+      setPayPeriods((prev) => [created, ...prev]);
+      toast.success("New pay period opened");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleCategory = async (id: string, isActive: boolean) => {
     const res = await fetch(`/api/categories/${id}`, {
       method: "PATCH",
@@ -260,6 +313,9 @@ export function SettingsClient({
         </TabsTrigger>
         <TabsTrigger value="categories" className="rounded-full px-4">
           Time Categories
+        </TabsTrigger>
+        <TabsTrigger value="pay-periods" className="rounded-full px-4">
+          Pay Periods
         </TabsTrigger>
         <TabsTrigger value="general" className="rounded-full px-4">
           General
@@ -402,6 +458,82 @@ export function SettingsClient({
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Pay Periods Tab */}
+      <TabsContent value="pay-periods">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">
+                Pay Periods ({payPeriods.length})
+              </CardTitle>
+              <Button size="sm" onClick={createNextPeriod} disabled={loading} className="gap-1.5">
+                <Plus className="w-3.5 h-3.5" />
+                Open Next Period
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {payPeriods.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No pay periods yet. Click "Open Next Period" to create the first one.
+              </p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Period</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Type</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payPeriods.map((period, i) => (
+                    <tr key={period.id} className={cn("hover:bg-muted/20", i !== payPeriods.length - 1 && "border-b")}>
+                      <td className="px-3 py-2.5 font-medium">
+                        {formatDate(period.startDate)} — {formatDate(period.endDate)}
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground capitalize">
+                        {period.type.charAt(0) + period.type.slice(1).toLowerCase()}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs",
+                            period.status === "OPEN" && "bg-green-50 text-green-700 border-green-200",
+                            period.status === "PROCESSING" && "bg-amber-50 text-amber-700 border-amber-200",
+                            period.status === "CLOSED" && "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {period.status.charAt(0) + period.status.slice(1).toLowerCase()}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center justify-end gap-1">
+                          {period.status === "OPEN" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => closePeriod(period.id)}
+                              disabled={loading}
+                            >
+                              <Lock className="w-3 h-3" />
+                              Close
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

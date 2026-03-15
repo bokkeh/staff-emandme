@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, formatMinutes, displayName, initials, getUpcomingBirthdays, formatDate } from "@/lib/utils";
 import { startOfWeek, endOfWeek, format } from "date-fns";
-import { Clock, Users, DollarSign, ArrowRight, Cake } from "lucide-react";
+import { Clock, Users, DollarSign, ArrowRight, Cake, CheckCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,9 @@ export default async function DashboardPage() {
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const [activeTimer, weekEntries, currentPeriod, allEmployees, pendingApprovals] =
+  const isManager = role === "ADMIN" || role === "MANAGER";
+
+  const [activeTimer, weekEntries, currentPeriod, allEmployees, pendingApprovals, activeTimers, recentSubmissions] =
     await Promise.all([
       employeeId
         ? prisma.activeTimer.findUnique({
@@ -56,9 +58,33 @@ export default async function DashboardPage() {
           profilePhotoUrl: true,
         },
       }),
-      role === "ADMIN" || role === "MANAGER"
+      isManager
         ? prisma.timeEntry.count({ where: { status: "SUBMITTED" } })
         : Promise.resolve(0),
+      isManager
+        ? prisma.activeTimer.findMany({
+            include: {
+              employee: {
+                select: { id: true, firstName: true, lastName: true, preferredName: true, profilePhotoUrl: true },
+              },
+              category: { select: { name: true } },
+            },
+            orderBy: { startedAt: "asc" },
+          })
+        : Promise.resolve([]),
+      isManager
+        ? prisma.timeEntry.findMany({
+            where: { status: "SUBMITTED" },
+            include: {
+              employee: {
+                select: { id: true, firstName: true, lastName: true, preferredName: true, profilePhotoUrl: true },
+              },
+              category: { select: { name: true } },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 8,
+          })
+        : Promise.resolve([]),
     ]);
 
   const weekMinutes = weekEntries.reduce(
@@ -167,20 +193,126 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Manager: pending approvals */}
-        {(role === "ADMIN" || role === "MANAGER") && (
-          <Card className={cn(pendingApprovals > 0 && "border-amber-200 bg-amber-50")}>
-            <CardContent className="pt-5 pb-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Pending Approvals</p>
-              <p className={cn("text-2xl font-semibold", pendingApprovals > 0 && "text-amber-700")}>
-                {pendingApprovals}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {pendingApprovals === 1 ? "entry" : "entries"} to review
-              </p>
-            </CardContent>
-          </Card>
+        {isManager && (
+          <Link href="/payroll">
+            <Card className={cn("transition-colors hover:border-primary/30", pendingApprovals > 0 && "border-amber-200 bg-amber-50")}>
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Pending Approvals</p>
+                    <p className={cn("text-2xl font-semibold", pendingApprovals > 0 && "text-amber-700")}>
+                      {pendingApprovals}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {pendingApprovals === 1 ? "entry" : "entries"} to review
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground mt-1" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         )}
       </div>
+
+      {/* Admin/manager: who's clocked in + recent submissions */}
+      {isManager && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Who's clocked in */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                Clocked In Now
+                {activeTimers.length > 0 && (
+                  <Badge className="text-xs bg-primary/10 text-primary border-primary/20">
+                    {activeTimers.length}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {activeTimers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No one is clocked in right now.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {activeTimers.map((timer) => (
+                    <Link
+                      key={timer.id}
+                      href={`/team/${timer.employee.id}`}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={timer.employee.profilePhotoUrl ?? undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                          {initials(displayName(timer.employee))}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{displayName(timer.employee)}</p>
+                        <p className="text-xs text-muted-foreground">{timer.category.name}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        since {format(new Date(timer.startedAt), "h:mm a")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent submissions */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Recent Submissions
+                </CardTitle>
+                {pendingApprovals > 0 && (
+                  <Link href="/payroll" className="text-xs text-primary hover:underline flex items-center gap-1">
+                    Review all <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {recentSubmissions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No pending submissions.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {recentSubmissions.map((entry) => (
+                    <Link
+                      key={entry.id}
+                      href={`/team/${entry.employee.id}`}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={entry.employee.profilePhotoUrl ?? undefined} />
+                        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                          {initials(displayName(entry.employee))}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{displayName(entry.employee)}</p>
+                        <p className="text-xs text-muted-foreground">{entry.category.name} · {formatMinutes(entry.durationMinutes ?? 0)}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {formatDate(entry.entryDate)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Quick links + birthdays */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
