@@ -413,7 +413,7 @@ export function PayrollClient({
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Regular</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">OT</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Approved</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Est. Payout</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Est. Payout <span className="font-normal">(approved)</span></th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Expenses</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Pending</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Entries</th>
@@ -505,11 +505,20 @@ export function PayrollClient({
                         formatMinutes(approvedMinutes)
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-medium">
-                      {formatCurrencyFromCents(
-                        s.employee.hourlyRateCents == null
-                          ? null
-                          : Math.round((approvedMinutes * s.employee.hourlyRateCents) / 60)
+                    <td className="px-4 py-3 text-right">
+                      {s.employee.hourlyRateCents == null ? (
+                        <span className="text-muted-foreground">-</span>
+                      ) : (
+                        <div>
+                          <p className="font-medium text-green-700">
+                            {formatCurrencyFromCents(Math.round((approvedMinutes * s.employee.hourlyRateCents) / 60))}
+                          </p>
+                          {pendingMinutes > 0 && (
+                            <p className="text-xs text-amber-600 mt-0.5">
+                              {formatCurrencyFromCents(Math.round(((approvedMinutes + pendingMinutes) * s.employee.hourlyRateCents) / 60))} if approved
+                            </p>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right font-medium text-blue-700">

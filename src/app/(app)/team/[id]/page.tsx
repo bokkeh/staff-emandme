@@ -265,20 +265,42 @@ export default async function EmployeeProfilePage({
               </CardHeader>
               <CardContent className="pt-0">
                 {periodSummary ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                      { label: "Approved", value: periodSummary.approvedMinutes, color: "text-green-600" },
-                      { label: "Pending", value: periodSummary.pendingMinutes, color: "text-amber-600" },
-                      { label: "Overtime", value: periodSummary.overtimeMinutes, color: "text-orange-600" },
-                      { label: "This Week", value: weekMinutes, color: "text-foreground" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="text-center p-3 rounded-lg bg-muted/40">
-                        <p className={cn("text-xl font-semibold", stat.color)}>
-                          {formatMinutes(stat.value)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {[
+                        { label: "Approved", value: periodSummary.approvedMinutes, color: "text-green-600" },
+                        { label: "Pending", value: periodSummary.pendingMinutes, color: "text-amber-600" },
+                        { label: "Overtime", value: periodSummary.overtimeMinutes, color: "text-orange-600" },
+                        { label: "This Week", value: weekMinutes, color: "text-foreground" },
+                      ].map((stat) => (
+                        <div key={stat.label} className="text-center p-3 rounded-lg bg-muted/40">
+                          <p className={cn("text-xl font-semibold", stat.color)}>
+                            {formatMinutes(stat.value)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {canSeeRate && employee.hourlyRateCents != null && (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/40 text-sm">
+                        <span className="text-muted-foreground">Est. Payout (approved)</span>
+                        <span className="font-semibold text-green-700">
+                          {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                            (periodSummary.approvedMinutes / 60) * (employee.hourlyRateCents / 100)
+                          )}
+                        </span>
                       </div>
-                    ))}
+                    )}
+                    {canSeeRate && employee.hourlyRateCents != null && periodSummary.pendingMinutes > 0 && (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm">
+                        <span className="text-muted-foreground">Est. Payout (if all approved)</span>
+                        <span className="font-semibold text-amber-700">
+                          {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+                            ((periodSummary.approvedMinutes + periodSummary.pendingMinutes) / 60) * (employee.hourlyRateCents / 100)
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
