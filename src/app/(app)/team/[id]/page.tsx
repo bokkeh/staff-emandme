@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, Mail, Phone, Calendar, Cake, DollarSign } from "lucide-react";
 import { startOfWeek, endOfWeek } from "date-fns";
+import { TeamMemberEdit } from "./team-member-edit";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,15 @@ export default async function EmployeeProfilePage({
   });
 
   if (!employee) notFound();
+
+  const allEmployees =
+    currentUserRole === "ADMIN"
+      ? await prisma.employee.findMany({
+          where: { status: "ACTIVE" },
+          select: { id: true, firstName: true, lastName: true, preferredName: true },
+          orderBy: { firstName: "asc" },
+        })
+      : [];
 
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
@@ -101,6 +111,11 @@ export default async function EmployeeProfilePage({
         {/* Profile card */}
         <div className="lg:col-span-1 space-y-4">
           <Card>
+            {currentUserRole === "ADMIN" && (
+              <div className="flex justify-end px-6 pt-4 pb-0">
+                <TeamMemberEdit employee={employee} allEmployees={allEmployees} />
+              </div>
+            )}
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center space-y-3">
                 <Avatar className="w-20 h-20 ring-4 ring-background shadow-md">
