@@ -26,7 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, displayName, formatDate, initials } from "@/lib/utils";
 import { format } from "date-fns";
-import { Plus, Pencil, Trash2, Check, X, Lock, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X, Lock } from "lucide-react";
 
 type AuditActorLike = {
   id: string;
@@ -517,7 +517,7 @@ export function SettingsClient({
           <CardContent className="pt-0">
             {payPeriods.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                No pay periods yet. Click "Open Next Period" to create the first one.
+                No pay periods yet. Click &ldquo;Open Next Period&rdquo; to create the first one.
               </p>
             ) : (
               <table className="w-full text-sm">
