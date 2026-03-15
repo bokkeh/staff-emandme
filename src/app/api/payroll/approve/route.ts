@@ -44,5 +44,17 @@ export async function POST(req: Request) {
     data: updateData,
   });
 
+  if (employeeId) {
+    await prisma.auditLog.createMany({
+      data: parsed.data.entryIds.map((id) => ({
+        actorId: employeeId,
+        action: parsed.data.action === "APPROVED" ? "TIME_ENTRY_APPROVED" : "TIME_ENTRY_REJECTED",
+        targetId: id,
+        targetType: "TimeEntry",
+        note: parsed.data.action === "REJECTED" ? (parsed.data.rejectionReason ?? undefined) : undefined,
+      })),
+    });
+  }
+
   return NextResponse.json({ success: true, count: parsed.data.entryIds.length });
 }

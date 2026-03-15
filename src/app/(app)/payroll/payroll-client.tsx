@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -287,6 +288,7 @@ export function PayrollClient({
             )}
           </TabsTrigger>
           <TabsTrigger value="summary" className="rounded-full px-4">Period Summary</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-full px-4">History</TabsTrigger>
         </TabsList>
 
         {currentRole === "ADMIN" && currentPeriod && (
@@ -346,7 +348,9 @@ export function PayrollClient({
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm">{displayName(group.employee)}</p>
+                          <Link href={`/team/${group.employee.id}`} className="font-medium text-sm hover:text-primary transition-colors">
+                            {displayName(group.employee)}
+                          </Link>
                           <p className="text-xs text-muted-foreground">
                             {group.entries.length} {group.entries.length === 1 ? "entry" : "entries"} submitted
                           </p>
@@ -460,7 +464,9 @@ export function PayrollClient({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{displayName(s.employee)}</p>
+                          <Link href={`/team/${s.employee.id}`} className="font-medium hover:text-primary transition-colors">
+                            {displayName(s.employee)}
+                          </Link>
                           <p className="text-xs text-muted-foreground">{s.employee.jobTitle ?? s.employee.role}</p>
                         </div>
                       </div>
@@ -639,6 +645,80 @@ export function PayrollClient({
               <div className="text-center py-12 text-muted-foreground text-sm">
                 No data for {selectedSummaryPeriod ? `${formatDate(selectedSummaryPeriod.startDate)} - ${formatDate(selectedSummaryPeriod.endDate)}` : "this pay period"}.
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* History Tab */}
+      <TabsContent value="history">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Pay Period History</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {payPeriods.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No pay periods found.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Period</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Total Hours</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Approved</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Pending</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Employees</th>
+                    {isAdmin && <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Export</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {payPeriods.map((period, i) => {
+                    const entries = periodEntries.filter((e) => e.payPeriodId === period.id);
+                    const totalMinutes = entries.reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+                    const approvedMinutes = entries.filter((e) => e.status === "APPROVED").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+                    const pendingMinutes = entries.filter((e) => e.status === "SUBMITTED").reduce((s, e) => s + (e.durationMinutes ?? 0), 0);
+                    const employeeCount = new Set(entries.map((e) => e.employeeId)).size;
+                    return (
+                      <tr key={period.id} className={cn("hover:bg-muted/20", i !== payPeriods.length - 1 && "border-b")}>
+                        <td className="px-4 py-3 font-medium">
+                          {formatDate(period.startDate)} — {formatDate(period.endDate)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs",
+                              period.status === "OPEN" && "bg-green-50 text-green-700 border-green-200",
+                              period.status === "PROCESSING" && "bg-amber-50 text-amber-700 border-amber-200",
+                              period.status === "CLOSED" && "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {period.status.charAt(0) + period.status.slice(1).toLowerCase()}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">{formatMinutes(totalMinutes)}</td>
+                        <td className="px-4 py-3 text-right text-green-700 font-medium">{formatMinutes(approvedMinutes)}</td>
+                        <td className="px-4 py-3 text-right text-amber-600 hidden md:table-cell">{formatMinutes(pendingMinutes)}</td>
+                        <td className="px-4 py-3 text-right text-muted-foreground hidden lg:table-cell">{employeeCount}</td>
+                        {isAdmin && (
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 text-xs"
+                              onClick={() => window.open(`/api/payroll/export?payPeriodId=${period.id}`, "_blank")}
+                            >
+                              <Download className="w-3 h-3" />
+                              CSV
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             )}
           </CardContent>
         </Card>

@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  CalendarOff,
 } from "lucide-react";
 import { cn, initials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,11 +32,12 @@ const navItems: NavItem[] = [
   { label: "Profile", href: "/profile", icon: UserCircle2 },
   { label: "Time Tracking", href: "/time", icon: Clock },
   { label: "Team Directory", href: "/team", icon: Users },
+  { label: "Time Off", href: "/time-off", icon: CalendarOff },
   { label: "Payroll", href: "/payroll", icon: DollarSign, roles: ["ADMIN", "MANAGER"] },
   { label: "Settings", href: "/settings", icon: Settings, roles: ["ADMIN"] },
 ];
 
-export function Sidebar() {
+export function Sidebar({ pendingApprovals = 0 }: { pendingApprovals?: number }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -94,9 +96,13 @@ export function Sidebar() {
                 )}
               />
               <span>{item.label}</span>
-              {active && (
+              {item.href === "/payroll" && pendingApprovals > 0 ? (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white">
+                  {pendingApprovals > 99 ? "99+" : pendingApprovals}
+                </span>
+              ) : active ? (
                 <div className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-sidebar-primary" />
-              )}
+              ) : null}
             </Link>
           );
         })}

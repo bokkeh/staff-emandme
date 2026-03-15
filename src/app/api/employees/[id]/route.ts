@@ -21,6 +21,7 @@ const schema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   preferredWorkHours: z.string().nullable().optional(),
   profilePhotoUrl: z.string().nullable().optional(),
+  adminNotes: z.string().nullable().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -42,11 +43,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const data = { ...parsed.data };
 
-  // Staff cannot change role or status
+  // Staff cannot change role, status, or admin notes
   if (role === "STAFF") {
     delete data.role;
     delete data.status;
     delete data.hourlyRateCents;
+    delete data.adminNotes;
   }
 
   if (data.startDate !== undefined) {

@@ -97,6 +97,7 @@ model Employee {
   status             EmployeeStatus @default(ACTIVE)
   profilePhotoUrl    String?
   preferredWorkHours String?
+  adminNotes         String?
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
@@ -109,6 +110,9 @@ model Employee {
   payrollSummaries PayrollSummary[]
   pets            Pet[]
   expenses        Expense[]
+  timeOffRequests TimeOffRequest[]
+  reviewedTimeOff TimeOffRequest[] @relation("ReviewedTimeOff")
+  auditLogs       AuditLog[]
 }
 
 model Pet {
@@ -265,6 +269,66 @@ model PayrollSummary {
   payPeriod PayPeriod @relation(fields: [payPeriodId], references: [id])
 
   @@unique([employeeId, payPeriodId])
+}
+
+// ─── PTO / Time Off ───────────────────────────────────────────────────────────
+
+enum TimeOffType {
+  VACATION
+  SICK
+  PERSONAL
+  UNPAID
+  OTHER
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model TimeOffRequest {
+  id           String        @id @default(cuid())
+  employeeId   String
+  type         TimeOffType   @default(VACATION)
+  status       TimeOffStatus @default(PENDING)
+  startDate    DateTime      @db.Date
+  endDate      DateTime      @db.Date
+  note         String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reviewedBy Employee? @relation("ReviewedTimeOff", fields: [reviewedById], references: [id])
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+enum AuditAction {
+  TIME_ENTRY_APPROVED
+  TIME_ENTRY_REJECTED
+  TIME_ENTRY_EDITED
+  TIME_ENTRY_DELETED
+  TIME_OFF_APPROVED
+  TIME_OFF_REJECTED
+  PAY_PERIOD_CLOSED
+  EMPLOYEE_UPDATED
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  actorId    String
+  action     AuditAction
+  targetId   String
+  targetType String
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  actor Employee @relation(fields: [actorId], references: [id])
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

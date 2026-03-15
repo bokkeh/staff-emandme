@@ -20,8 +20,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil } from "lucide-react";
-import { displayName } from "@/lib/utils";
+import { Pencil, Upload } from "lucide-react";
+import { displayName, initials } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type EmployeeLike = {
   id: string;
@@ -47,6 +49,8 @@ type EmployeeDetail = {
   birthYear?: number | null;
   startDate?: Date | string | null;
   status: string;
+  adminNotes?: string | null;
+  profilePhotoUrl?: string | null;
 };
 
 export function TeamMemberEdit({
@@ -59,6 +63,7 @@ export function TeamMemberEdit({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(employee.profilePhotoUrl ?? null);
   const [form, setForm] = useState({
     firstName: employee.firstName,
     lastName: employee.lastName,
@@ -75,7 +80,27 @@ export function TeamMemberEdit({
     birthDay: employee.birthDay ? String(employee.birthDay) : "",
     birthYear: employee.birthYear ? String(employee.birthYear) : "",
     status: employee.status,
+    adminNotes: employee.adminNotes ?? "",
   });
+
+  const uploadPhoto = async (file: File) => {
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/upload/profile-photo?employeeId=${employee.id}`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error ?? "Photo upload failed");
+        return;
+      }
+      const { url } = await res.json();
+      setPhotoPreview(url);
+      toast.success("Photo updated");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     setLoading(true);
@@ -96,6 +121,7 @@ export function TeamMemberEdit({
         birthDay: form.birthDay ? Number(form.birthDay) : undefined,
         birthYear: form.birthYear ? Number(form.birthYear) : undefined,
         status: form.status,
+        adminNotes: form.adminNotes || null,
       };
 
       const res = await fetch(`/api/employees/${employee.id}`, {
@@ -131,6 +157,32 @@ export function TeamMemberEdit({
             <DialogTitle>Edit {displayName(employee)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Photo upload */}
+            <div className="flex items-center gap-4">
+              <Avatar className="w-14 h-14 shrink-0">
+                <AvatarImage src={photoPreview ?? undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {initials(displayName(employee))}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <label htmlFor="team-photo-upload" className="cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload Photo
+                  </span>
+                </label>
+                <Input
+                  id="team-photo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={loading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto(f); }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">JPG, PNG up to 5MB</p>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>First Name *</Label>
@@ -268,6 +320,15 @@ export function TeamMemberEdit({
                   onChange={(e) => setForm((f) => ({ ...f, birthYear: e.target.value }))}
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Admin Notes</Label>
+              <Textarea
+                placeholder="Internal notes visible only to admins and managers…"
+                value={form.adminNotes}
+                onChange={(e) => setForm((f) => ({ ...f, adminNotes: e.target.value }))}
+                rows={3}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Reports To</Label>

@@ -190,8 +190,23 @@ export function ProfileClient({ employee: initialEmployee }: { employee: Employe
 
   const onProfilePhotoChange = async (file: File | null) => {
     if (!file) return;
-    const dataUrl = await toDataUrl(file);
-    setForm((p) => ({ ...p, profilePhotoUrl: dataUrl }));
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload/profile-photo", { method: "POST", body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error ?? "Photo upload failed");
+        return;
+      }
+      const { url } = await res.json();
+      setForm((p) => ({ ...p, profilePhotoUrl: url }));
+      setEmployee((e) => ({ ...e, profilePhotoUrl: url }));
+      toast.success("Photo updated");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addPet = () => {

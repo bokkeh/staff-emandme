@@ -23,8 +23,40 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { cn, displayName, formatDate } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn, displayName, formatDate, initials } from "@/lib/utils";
+import { format } from "date-fns";
 import { Plus, Pencil, Trash2, Check, X, Lock, ChevronRight } from "lucide-react";
+
+type AuditActorLike = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  preferredName?: string | null;
+  profilePhotoUrl?: string | null;
+};
+
+type AuditLogLike = {
+  id: string;
+  actorId: string;
+  action: string;
+  targetId: string;
+  targetType: string;
+  note?: string | null;
+  createdAt: Date | string;
+  actor: AuditActorLike;
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  TIME_ENTRY_APPROVED: "Approved time entry",
+  TIME_ENTRY_REJECTED: "Rejected time entry",
+  TIME_ENTRY_EDITED: "Edited time entry",
+  TIME_ENTRY_DELETED: "Deleted time entry",
+  TIME_OFF_APPROVED: "Approved time off",
+  TIME_OFF_REJECTED: "Rejected time off",
+  PAY_PERIOD_CLOSED: "Closed pay period",
+  EMPLOYEE_UPDATED: "Updated employee",
+};
 
 type PayPeriodLike = {
   id: string;
@@ -71,16 +103,19 @@ export function SettingsClient({
   categories: initialCategories,
   employees: initialEmployees,
   payPeriods: initialPayPeriods,
+  auditLogs: initialAuditLogs,
 }: {
   settings: AppSettingsLike | null;
   categories: TimeCategoryLike[];
   employees: PartialEmployee[];
   payPeriods: PayPeriodLike[];
+  auditLogs: AuditLogLike[];
 }) {
   const [settings, setSettings] = useState(initialSettings);
   const [categories, setCategories] = useState(initialCategories);
   const [employees, setEmployees] = useState(initialEmployees);
   const [payPeriods, setPayPeriods] = useState(initialPayPeriods);
+  const [auditLogs] = useState(initialAuditLogs);
   const [loading, setLoading] = useState(false);
 
   // Category add
@@ -319,6 +354,9 @@ export function SettingsClient({
         </TabsTrigger>
         <TabsTrigger value="general" className="rounded-full px-4">
           General
+        </TabsTrigger>
+        <TabsTrigger value="audit" className="rounded-full px-4">
+          Audit Log
         </TabsTrigger>
       </TabsList>
 
@@ -583,6 +621,44 @@ export function SettingsClient({
                 onCheckedChange={(v) => saveSettings({ birthdaysVisibleToAll: v })}
               />
             </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Audit Log Tab */}
+      <TabsContent value="audit">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Audit Log (last 100)</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {auditLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No audit events yet.</p>
+            ) : (
+              <div className="space-y-1">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/20 transition-colors">
+                    <Avatar className="w-7 h-7 shrink-0 mt-0.5">
+                      <AvatarImage src={log.actor.profilePhotoUrl ?? undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                        {initials(displayName(log.actor))}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">
+                        <span className="font-medium">{displayName(log.actor)}</span>
+                        {" "}
+                        <span className="text-muted-foreground">{ACTION_LABELS[log.action] ?? log.action.toLowerCase().replace(/_/g, " ")}</span>
+                      </p>
+                      {log.note && <p className="text-xs text-muted-foreground mt-0.5 italic">{log.note}</p>}
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {format(new Date(log.createdAt), "MMM d, h:mm a")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

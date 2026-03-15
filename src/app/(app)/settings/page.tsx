@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const role = (session.user as { role?: string })?.role;
   if (role !== "ADMIN") redirect("/dashboard");
 
-  const [settings, categories, employees, payPeriods] = await Promise.all([
+  const [settings, categories, employees, payPeriods, auditLogs] = await Promise.all([
     prisma.appSettings.findFirst(),
     prisma.timeCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.employee.findMany({
@@ -40,6 +40,11 @@ export default async function SettingsPage() {
       },
     }),
     prisma.payPeriod.findMany({ orderBy: { startDate: "desc" }, take: 20 }),
+    prisma.auditLog.findMany({
+      include: { actor: { select: { id: true, firstName: true, lastName: true, preferredName: true, profilePhotoUrl: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
   ]);
 
   return (
@@ -53,6 +58,7 @@ export default async function SettingsPage() {
         categories={categories}
         employees={employees}
         payPeriods={payPeriods}
+        auditLogs={auditLogs}
       />
     </div>
   );

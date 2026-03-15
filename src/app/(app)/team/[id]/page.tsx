@@ -214,6 +214,15 @@ export default async function EmployeeProfilePage({
                   </div>
                 </>
               )}
+              {(currentUserRole === "ADMIN" || currentUserRole === "MANAGER") && employee.adminNotes && (
+                <>
+                  <Separator className="my-4" />
+                  <div className="text-sm">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Admin Notes</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{employee.adminNotes}</p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
