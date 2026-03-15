@@ -46,18 +46,14 @@ export async function POST(req: Request) {
 
   const endDate = addDays(startDate, 13); // 14-day biweekly period
 
-  // Check if an OPEN period already exists overlapping these dates
+  // Check if any period already exists with this start date
   const conflict = await prisma.payPeriod.findFirst({
-    where: {
-      status: "OPEN",
-      startDate: { lte: endDate },
-      endDate: { gte: startDate },
-    },
+    where: { startDate },
   });
 
   if (conflict) {
     return NextResponse.json(
-      { error: "An open pay period already covers these dates." },
+      { error: "A pay period with this start date already exists." },
       { status: 409 }
     );
   }

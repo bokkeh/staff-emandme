@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const role = (session.user as { role?: string })?.role;
   if (role !== "ADMIN") redirect("/dashboard");
 
-  const [settings, categories, employees, payPeriods, auditLogs] = await Promise.all([
+  const [settings, categories, employees, rawPayPeriods, auditLogs] = await Promise.all([
     prisma.appSettings.findFirst(),
     prisma.timeCategory.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.employee.findMany({
@@ -39,13 +39,22 @@ export default async function SettingsPage() {
         preferredWorkHours: true,
       },
     }),
-    prisma.payPeriod.findMany({ orderBy: { startDate: "desc" }, take: 20 }),
+    prisma.payPeriod.findMany({ orderBy: { startDate: "desc" }, take: 40 }),
     prisma.auditLog.findMany({
       include: { actor: { select: { id: true, firstName: true, lastName: true, preferredName: true, profilePhotoUrl: true } } },
       orderBy: { createdAt: "desc" },
       take: 100,
     }),
   ]);
+
+  // Deduplicate pay periods by startDate (keeps the first/most-recent per start date)
+  const seenStarts = new Set<string>();
+  const payPeriods = rawPayPeriods.filter((p) => {
+    const key = new Date(p.startDate).toISOString().split("T")[0];
+    if (seenStarts.has(key)) return false;
+    seenStarts.add(key);
+    return true;
+  });
 
   return (
     <div>

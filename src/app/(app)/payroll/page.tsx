@@ -57,10 +57,19 @@ export default async function PayrollPage() {
     });
   }
 
-  const normalizedPeriods = await prisma.payPeriod.findMany({
+  const rawPeriods = await prisma.payPeriod.findMany({
     orderBy: { startDate: "desc" },
-    take: 10,
+    take: 20,
   });
+
+  // Deduplicate by startDate (keeps the most-recently-created record per start date)
+  const seenStarts = new Set<string>();
+  const normalizedPeriods = rawPeriods.filter((p: PayrollPeriod) => {
+    const key = new Date(p.startDate).toISOString().split("T")[0];
+    if (seenStarts.has(key)) return false;
+    seenStarts.add(key);
+    return true;
+  }).slice(0, 10);
 
   const currentPeriod =
     normalizedPeriods.find((p: PayrollPeriod) => p.status === "OPEN") ?? normalizedPeriods[0] ?? null;
