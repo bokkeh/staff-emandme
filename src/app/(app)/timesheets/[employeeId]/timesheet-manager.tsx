@@ -292,39 +292,39 @@ export function TimesheetManager({
       <div className="rounded-2xl overflow-hidden shadow-md border border-border/40 bg-card">
 
         {/* ── Header ── */}
-        <div className="bg-[#14211f] px-5 pt-5 pb-4">
-          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#E68D83] mb-3">
+        <div className="bg-[#FDF0EC] px-5 pt-5 pb-4">
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-[#c4736a] mb-3">
             Weekly Record
           </p>
           <div className="flex items-center justify-between gap-2">
             <Button
               size="icon"
               variant="ghost"
-              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              className="w-8 h-8 text-foreground/40 hover:text-foreground hover:bg-black/8 shrink-0"
               onClick={() => setWeekStart((d) => addDays(d, -7))}
             >
               <ChevronLeft className="w-5 h-5" />
             </Button>
 
             <div className="flex items-center gap-3 text-sm min-w-0 overflow-hidden">
-              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">{prevWeekLabel}</span>
-              <span className="text-white font-semibold text-sm text-center leading-tight">
+              <span className="text-foreground/35 text-xs shrink-0 hidden sm:inline">{prevWeekLabel}</span>
+              <span className="text-foreground font-semibold text-sm text-center leading-tight">
                 {currentWeekLabel}
               </span>
-              <span className="text-white/35 text-xs shrink-0 hidden sm:inline">{nextWeekLabel}</span>
+              <span className="text-foreground/35 text-xs shrink-0 hidden sm:inline">{nextWeekLabel}</span>
             </div>
 
             <Button
               size="icon"
               variant="ghost"
-              className="w-8 h-8 text-white/50 hover:text-white hover:bg-white/10 shrink-0"
+              className="w-8 h-8 text-foreground/40 hover:text-foreground hover:bg-black/8 shrink-0"
               onClick={() => setWeekStart((d) => addDays(d, 7))}
             >
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
 
-          <p className="text-center text-white/35 text-[11px] mt-2">
+          <p className="text-center text-foreground/40 text-[11px] mt-2">
             {totalMinutes > 0 ? `${formatMinutes(totalMinutes)} logged this week` : "No entries yet"}
           </p>
         </div>
@@ -345,7 +345,7 @@ export function TimesheetManager({
                 )}
               >
                 {/* Day tile */}
-                <div className="relative w-[52px] h-[52px] rounded-xl overflow-hidden flex flex-col items-center justify-center shrink-0 bg-[#14211f]">
+                <div className="relative w-[52px] h-[52px] rounded-xl overflow-hidden flex flex-col items-center justify-center shrink-0 bg-[#9CA3AF]">
                   {DAY_DECORATIONS[idx]}
                   <span className="text-white text-[11px] font-bold uppercase tracking-wider z-10 leading-none mb-0.5">
                     {format(day, "EEE")}
