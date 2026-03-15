@@ -150,6 +150,7 @@ export function PayrollClient({
   );
 
   const summaries = buildSummaries(employees, summaryEntries);
+
   const expenseTotalsByEmployee = useMemo(() => {
     const map = new Map<string, number>();
     for (const expense of periodExpenses) {
@@ -159,6 +160,34 @@ export function PayrollClient({
     }
     return map;
   }, [periodExpenses, selectedSummaryPeriodId]);
+  // Effective values per row (respects overrides), used for totals
+  const effectiveRows = useMemo(() => summaries.map((s) => {
+    const override = summaryOverrides[s.employee.id];
+    const totalMinutes = override?.totalMinutes ?? s.totalMinutes;
+    const approvedMinutes = override?.approvedMinutes ?? s.approvedMinutes;
+    const pendingMinutes = override?.pendingMinutes ?? s.pendingMinutes;
+    const overtimeMinutes = override?.overtimeMinutes ?? s.overtimeMinutes;
+    const expenseCents = expenseTotalsByEmployee.get(s.employee.id) ?? 0;
+    const payoutCents = s.employee.hourlyRateCents != null
+      ? Math.round((approvedMinutes * s.employee.hourlyRateCents) / 60)
+      : 0;
+    const pendingPayoutCents = s.employee.hourlyRateCents != null
+      ? Math.round(((approvedMinutes + pendingMinutes) * s.employee.hourlyRateCents) / 60)
+      : 0;
+    return { id: s.employee.id, totalMinutes, approvedMinutes, pendingMinutes, overtimeMinutes, expenseCents, payoutCents, pendingPayoutCents, hasRate: s.employee.hourlyRateCents != null };
+  }), [summaries, summaryOverrides, expenseTotalsByEmployee]);
+
+  const totals = useMemo(() => ({
+    totalMinutes: effectiveRows.reduce((s, r) => s + r.totalMinutes, 0),
+    approvedMinutes: effectiveRows.reduce((s, r) => s + r.approvedMinutes, 0),
+    overtimeMinutes: effectiveRows.reduce((s, r) => s + r.overtimeMinutes, 0),
+    pendingMinutes: effectiveRows.reduce((s, r) => s + r.pendingMinutes, 0),
+    payoutCents: effectiveRows.reduce((s, r) => s + r.payoutCents, 0),
+    pendingPayoutCents: effectiveRows.reduce((s, r) => s + r.pendingPayoutCents, 0),
+    expenseCents: effectiveRows.reduce((s, r) => s + r.expenseCents, 0),
+    entryCount: summaries.reduce((s, sm) => s + (summaryOverrides[sm.employee.id]?.entryCount ?? sm.entryCount), 0),
+  }), [effectiveRows, summaries, summaryOverrides]);
+
   const pendingGroups = useMemo(() => {
     const groups = new Map<string, { employee: EmployeeLike; entries: EntryWithRelations[]; totalMinutes: number }>();
     for (const entry of pending) {
@@ -571,6 +600,40 @@ export function PayrollClient({
                   </tr>
                 ))}
               </tbody>
+              {summaries.length > 0 && (
+                <tfoot>
+                  <tr className="border-t-2 bg-muted/40 font-semibold">
+                    <td className="px-4 py-3 text-sm">Totals</td>
+                    <td className="px-4 py-3 text-right text-sm">{formatMinutes(totals.totalMinutes)}</td>
+                    <td className="px-4 py-3 text-right text-sm text-muted-foreground hidden sm:table-cell">
+                      {formatMinutes(Math.min(totals.totalMinutes, totals.totalMinutes - totals.overtimeMinutes))}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm hidden sm:table-cell">
+                      {totals.overtimeMinutes > 0
+                        ? <span className="text-orange-600">{formatMinutes(totals.overtimeMinutes)}</span>
+                        : <span className="text-muted-foreground">-</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-green-700">{formatMinutes(totals.approvedMinutes)}</td>
+                    <td className="px-4 py-3 text-right text-sm">
+                      <p className="text-green-700">{formatCurrencyFromCents(totals.payoutCents)}</p>
+                      {totals.pendingMinutes > 0 && (
+                        <p className="text-xs text-amber-600 font-normal mt-0.5">
+                          {formatCurrencyFromCents(totals.pendingPayoutCents)} if approved
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-blue-700">
+                      {totals.expenseCents > 0 ? formatCurrencyFromCents(totals.expenseCents) : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-amber-600 hidden md:table-cell">
+                      {totals.pendingMinutes > 0 ? formatMinutes(totals.pendingMinutes) : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-muted-foreground hidden lg:table-cell">
+                      {totals.entryCount}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
             {summaries.length === 0 && (
               <div className="text-center py-12 text-muted-foreground text-sm">

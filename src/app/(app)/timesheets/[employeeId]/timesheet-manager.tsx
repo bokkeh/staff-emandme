@@ -273,8 +273,10 @@ export function TimesheetManager({
                   >
                     <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {activeCategories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                          {c.name}{!c.isActive ? " (inactive)" : ""}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -423,8 +425,10 @@ export function TimesheetManager({
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {activeCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id} disabled={!c.isActive}>
+                      {c.name}{!c.isActive ? " (inactive)" : ""}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
