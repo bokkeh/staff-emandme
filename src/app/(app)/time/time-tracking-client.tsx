@@ -53,6 +53,7 @@ type TimeEntryLike = {
   id: string;
   categoryId: string;
   source?: string;
+  editNote?: string | null;
   rejectionReason?: string | null;
   entryDate: Date | string;
   startTime?: Date | string | null;
@@ -1284,12 +1285,25 @@ export function TimeTrackingClient({
                                     >
                                       {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
                                     </Badge>
+                                    {entry.source === "ADMIN_EDIT" && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs bg-amber-50 text-amber-700 border-amber-200"
+                                      >
+                                        Admin Override
+                                      </Badge>
+                                    )}
                                     {entry.source === "MANUAL" && (
                                       <Badge variant="outline" className="text-xs">Manual</Badge>
                                     )}
                                   </div>
                                   {entry.note && (
                                     <p className="text-xs text-muted-foreground mt-0.5">{entry.note}</p>
+                                  )}
+                                  {entry.editNote && (
+                                    <p className="text-xs text-amber-700 mt-0.5">
+                                      Override reason: {entry.editNote}
+                                    </p>
                                   )}
                                   {entry.startTime && entry.endTime && (
                                     <p className="text-xs text-muted-foreground mt-0.5">

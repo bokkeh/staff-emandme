@@ -39,20 +39,41 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const updateData: Record<string, unknown> = {};
+  const isAdminOrManager = role === "ADMIN" || role === "MANAGER";
+  const isAdminOverride =
+    isAdminOrManager &&
+    (
+      parsed.data.categoryId !== undefined ||
+      parsed.data.entryDate !== undefined ||
+      parsed.data.startTime !== undefined ||
+      parsed.data.endTime !== undefined ||
+      parsed.data.note !== undefined
+    );
+
+  if (isAdminOverride) {
+    const reason = parsed.data.editNote?.trim();
+    if (!reason) {
+      return NextResponse.json(
+        { error: "Admin override reason is required" },
+        { status: 400 }
+      );
+    }
+    updateData.editNote = reason;
+  }
 
   // Status/note fields available to all
   if (parsed.data.status !== undefined) updateData.status = parsed.data.status;
   if (parsed.data.rejectionReason !== undefined) updateData.rejectionReason = parsed.data.rejectionReason;
-  if (parsed.data.editNote !== undefined) updateData.editNote = parsed.data.editNote;
+  if (!isAdminOverride && parsed.data.editNote !== undefined) updateData.editNote = parsed.data.editNote;
   if (parsed.data.note !== undefined) updateData.note = parsed.data.note;
 
-  if (parsed.data.status === "APPROVED" && (role === "ADMIN" || role === "MANAGER")) {
+  if (parsed.data.status === "APPROVED" && isAdminOrManager) {
     updateData.approvedById = employeeId;
     updateData.approvedAt = new Date();
   }
 
   // Full field edits for admin/manager only
-  if (role === "ADMIN" || role === "MANAGER") {
+  if (isAdminOrManager) {
     if (parsed.data.categoryId) updateData.categoryId = parsed.data.categoryId;
 
     if (parsed.data.startTime && parsed.data.endTime) {
@@ -81,6 +102,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data: updateData,
     include: { category: true },
   });
+
+  if (employeeId && isAdminOverride) {
+    await prisma.auditLog.create({
+      data: {
+        actorId: employeeId,
+        action: "TIME_ENTRY_EDITED",
+        targetId: id,
+        targetType: "TimeEntry",
+        note: updateData.editNote as string,
+      },
+    });
+  }
 
   return NextResponse.json(updated);
 }

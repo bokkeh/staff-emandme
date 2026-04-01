@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn, formatMinutes, formatTime } from "@/lib/utils";
+import { cn, formatMinutes } from "@/lib/utils";
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Save } from "lucide-react";
 
 type Category = { id: string; name: string; isActive: boolean };
@@ -36,6 +36,7 @@ type TimeEntry = {
   endTime?: string | Date | null;
   durationMinutes?: number | null;
   note?: string | null;
+  editNote?: string | null;
   status: string;
   source?: string | null;
 };
@@ -133,6 +134,7 @@ export function TimesheetManager({
     endTime: "",
     note: "",
   });
+  const [overrideReason, setOverrideReason] = useState("");
 
   const prevWeekLabel = format(addDays(weekStart, -7), "MMM d");
   const nextWeekLabel = format(addDays(weekStart, 7), "MMM d");
@@ -213,6 +215,7 @@ export function TimesheetManager({
   // --- Single entry dialog ---
   const openAdd = () => {
     setEditingEntry(null);
+    setOverrideReason("");
     setForm({
       categoryId: activeCategories[0]?.id ?? categories[0]?.id ?? "",
       entryDate: format(new Date(), "yyyy-MM-dd"),
@@ -225,6 +228,7 @@ export function TimesheetManager({
 
   const openEdit = (entry: TimeEntry) => {
     setEditingEntry(entry);
+    setOverrideReason("");
     setForm({
       categoryId: entry.categoryId,
       entryDate: new Date(entry.entryDate).toISOString().slice(0, 10),
@@ -237,6 +241,10 @@ export function TimesheetManager({
 
   const saveEntry = async () => {
     if (!form.startTime || !form.endTime) { toast.error("Start and end time are required"); return; }
+    if (editingEntry && isAdminOrManager && !overrideReason.trim()) {
+      toast.error("Admin override reason is required");
+      return;
+    }
     setLoading(true);
     try {
       if (editingEntry) {
@@ -249,6 +257,7 @@ export function TimesheetManager({
             startTime: `${form.entryDate}T${form.startTime}:00`,
             endTime: `${form.entryDate}T${form.endTime}:00`,
             note: form.note || undefined,
+            editNote: overrideReason.trim(),
           }),
         });
         if (!res.ok) { toast.error((await res.json()).error ?? "Failed to save"); return; }
@@ -390,12 +399,25 @@ export function TimesheetManager({
                               >
                                 {entry.status.charAt(0) + entry.status.slice(1).toLowerCase()}
                               </Badge>
+                              {entry.source === "ADMIN_EDIT" && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] h-[18px] px-1.5 bg-amber-50 text-amber-700 border-amber-200"
+                                >
+                                  Admin Override
+                                </Badge>
+                              )}
                               {entry.note && (
                                 <span className="text-[10px] text-muted-foreground/70 truncate max-w-[120px]">
                                   · {entry.note}
                                 </span>
                               )}
                             </div>
+                            {entry.editNote && (
+                              <p className="text-[10px] text-amber-700 mt-1">
+                                Override reason: {entry.editNote}
+                              </p>
+                            )}
                           </div>
 
                           {isAdminOrManager && (
@@ -588,6 +610,17 @@ export function TimesheetManager({
                 onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               />
             </div>
+            {editingEntry && isAdminOrManager && (
+              <div className="space-y-1.5">
+                <Label>Admin Override Reason</Label>
+                <Textarea
+                  rows={3}
+                  placeholder="Explain why you are changing this entry"
+                  value={overrideReason}
+                  onChange={(e) => setOverrideReason(e.target.value)}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={loading}>
