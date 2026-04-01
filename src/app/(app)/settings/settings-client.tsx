@@ -26,7 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, displayName, formatDate, initials } from "@/lib/utils";
 import { format } from "date-fns";
-import { Plus, Pencil, Trash2, Check, X, Lock } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X, Lock, RotateCcw } from "lucide-react";
 
 type AuditActorLike = {
   id: string;
@@ -308,6 +308,27 @@ export function SettingsClient({
     }
   };
 
+  const reopenPeriod = async (id: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/payroll/periods/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "OPEN" }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error ?? "Failed to reopen period");
+        return;
+      }
+      const updated = await res.json();
+      setPayPeriods((prev) => prev.map((p) => (p.id === id ? updated : p)));
+      toast.success("Pay period reopened");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createNextPeriod = async () => {
     setLoading(true);
     try {
@@ -563,6 +584,18 @@ export function SettingsClient({
                             >
                               <Lock className="w-3 h-3" />
                               Close
+                            </Button>
+                          )}
+                          {period.status === "CLOSED" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => reopenPeriod(period.id)}
+                              disabled={loading}
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Reopen
                             </Button>
                           )}
                         </div>
