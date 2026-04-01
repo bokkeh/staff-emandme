@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensurePayPeriodForDate } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -70,13 +71,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       updateData.entryDate = parseISO(parsed.data.entryDate);
       // Re-assign pay period
       const entryDate = parseISO(parsed.data.entryDate);
-      const payPeriod = await prisma.payPeriod.findFirst({
-        where: {
-          startDate: { lte: entryDate },
-          endDate: { gte: entryDate },
-          status: "OPEN",
-        },
-      });
+      const payPeriod = await ensurePayPeriodForDate(prisma, entryDate);
       updateData.payPeriodId = payPeriod?.id ?? null;
     }
   }

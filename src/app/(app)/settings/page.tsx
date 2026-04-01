@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensureCurrentPayPeriod } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,6 +13,8 @@ export default async function SettingsPage() {
 
   const role = (session.user as { role?: string })?.role;
   if (role !== "ADMIN") redirect("/dashboard");
+
+  await ensureCurrentPayPeriod(prisma);
 
   const [settings, categories, employees, rawPayPeriods, auditLogs] = await Promise.all([
     prisma.appSettings.findFirst(),

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensureCurrentPayPeriod } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -63,10 +64,7 @@ export default async function EmployeeProfilePage({
       select: { durationMinutes: true },
     }),
     prisma.timeCategory.findMany({ orderBy: { sortOrder: "asc" } }),
-    prisma.payPeriod.findFirst({
-      where: { status: "OPEN" },
-      orderBy: { startDate: "desc" },
-    }),
+    ensureCurrentPayPeriod(prisma),
   ]);
 
   const weekMinutes = recentEntries

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensureCurrentPayPeriod } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { differenceInMinutes } from "date-fns";
@@ -16,14 +17,7 @@ export async function POST() {
   const now = new Date();
   const duration = Math.max(1, differenceInMinutes(now, timer.startedAt));
 
-  // Find current pay period
-  const payPeriod = await prisma.payPeriod.findFirst({
-    where: {
-      startDate: { lte: now },
-      endDate: { gte: now },
-      status: "OPEN",
-    },
-  });
+  const payPeriod = await ensureCurrentPayPeriod(prisma);
 
   const entry = await prisma.$transaction(async (tx) => {
     const newEntry = await tx.timeEntry.create({

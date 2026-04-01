@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensureCurrentPayPeriod } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
@@ -31,18 +32,18 @@ export default async function PayrollPage() {
   if (!session) redirect("/login");
 
   const role = (session.user as { role?: string })?.role;
-  const employeeId = (session.user as { employeeId?: string })?.employeeId;
 
   if (role !== "ADMIN" && role !== "MANAGER") {
     redirect("/dashboard");
   }
 
+  const ensuredCurrentPeriod = await ensureCurrentPayPeriod(prisma);
   const payPeriods = await prisma.payPeriod.findMany({
     orderBy: { startDate: "desc" },
     take: 10,
   });
 
-  const openPeriod = payPeriods.find((p: PayrollPeriod) => p.status === "OPEN");
+  const openPeriod = payPeriods.find((p: PayrollPeriod) => p.id === ensuredCurrentPeriod?.id);
   if (
     openPeriod &&
     (openPeriod.type !== "BIWEEKLY" ||
@@ -72,7 +73,7 @@ export default async function PayrollPage() {
   }).slice(0, 10);
 
   const currentPeriod =
-    normalizedPeriods.find((p: PayrollPeriod) => p.status === "OPEN") ?? normalizedPeriods[0] ?? null;
+    normalizedPeriods.find((p: PayrollPeriod) => p.id === ensuredCurrentPeriod?.id) ?? normalizedPeriods[0] ?? null;
 
   const employees = await prisma.employee.findMany({
     where: { status: "ACTIVE" },

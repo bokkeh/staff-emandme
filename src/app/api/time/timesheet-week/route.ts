@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensurePayPeriodForDate } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -90,13 +91,7 @@ export async function POST(req: Request) {
           throw new Error(`Cannot submit ${day.entryDate}: hours overlap with another entry.`);
         }
 
-        const payPeriod = await tx.payPeriod.findFirst({
-          where: {
-            startDate: { lte: dayStart },
-            endDate: { gte: dayStart },
-            status: "OPEN",
-          },
-        });
+        const payPeriod = await ensurePayPeriodForDate(tx, dayStart);
 
         const entry = await tx.timeEntry.create({
           data: {
@@ -206,13 +201,7 @@ export async function PUT(req: Request) {
           throw new Error(`Cannot submit ${day.entryDate}: hours overlap with another entry.`);
         }
 
-        const payPeriod = await tx.payPeriod.findFirst({
-          where: {
-            startDate: { lte: dayStart },
-            endDate: { gte: dayStart },
-            status: "OPEN",
-          },
-        });
+        const payPeriod = await ensurePayPeriodForDate(tx, dayStart);
 
         const entry = await tx.timeEntry.create({
           data: {

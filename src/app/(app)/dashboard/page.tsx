@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensureCurrentPayPeriod } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -42,10 +43,7 @@ export default async function DashboardPage() {
             },
           })
         : [],
-      prisma.payPeriod.findFirst({
-        where: { status: "OPEN" },
-        orderBy: { startDate: "desc" },
-      }),
+      ensureCurrentPayPeriod(prisma),
       prisma.employee.findMany({
         where: { status: "ACTIVE" },
         select: {

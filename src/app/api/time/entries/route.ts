@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ensurePayPeriodForDate } from "@/lib/payroll";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -60,14 +61,7 @@ export async function POST(req: Request) {
   const settings = await prisma.appSettings.findFirst();
   const flagThreshold = (settings?.overtimeWeeklyHours ?? 40) * 60;
 
-  const now = new Date();
-  const payPeriod = await prisma.payPeriod.findFirst({
-    where: {
-      startDate: { lte: entryDate },
-      endDate: { gte: entryDate },
-      status: "OPEN",
-    },
-  });
+  const payPeriod = await ensurePayPeriodForDate(prisma, entryDate);
 
   const entry = await prisma.timeEntry.create({
     data: {
