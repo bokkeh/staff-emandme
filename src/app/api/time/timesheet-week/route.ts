@@ -46,8 +46,6 @@ export async function POST(req: Request) {
   let created;
   try {
     created = await prisma.$transaction(async (tx) => {
-      const dates = requestedDays.map((d) => startOfDay(parseISO(d.entryDate)));
-
       const results = [];
       for (const day of requestedDays) {
         const entryDate = parseISO(day.entryDate);
@@ -146,24 +144,61 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Enter at least one day with time greater than 0." }, { status: 400 });
   }
 
-  const dates = requestedDays.map((d) => startOfDay(parseISO(d.entryDate)));
+  const payloadDays = parsed.data.days.map((d) => ({
+    ...d,
+    dayStart: startOfDay(parseISO(d.entryDate)),
+  }));
 
   let created;
   try {
     created = await prisma.$transaction(async (tx) => {
-      await tx.timeEntry.deleteMany({
+      const existingEntries = await tx.timeEntry.findMany({
         where: {
           employeeId,
           source: "MANUAL",
-          entryDate: { in: dates },
+          entryDate: { in: payloadDays.map((d) => d.dayStart) },
         },
+        include: { category: true },
+        orderBy: [{ entryDate: "asc" }, { createdAt: "asc" }],
       });
 
+      const existingByDay = new Map<string, typeof existingEntries>();
+      for (const entry of existingEntries) {
+        const key = entry.entryDate.toISOString().slice(0, 10);
+        const current = existingByDay.get(key) ?? [];
+        current.push(entry);
+        existingByDay.set(key, current);
+      }
+
+      for (const day of payloadDays) {
+        const key = day.dayStart.toISOString().slice(0, 10);
+        const dayEntries = existingByDay.get(key) ?? [];
+        if (dayEntries.length > 1) {
+          throw new Error(
+            `Cannot update ${day.entryDate}: this day has multiple manual entries. Edit the entries individually instead.`
+          );
+        }
+      }
+
       const results = [];
-      for (const day of requestedDays) {
-        const entryDate = parseISO(day.entryDate);
+      for (const day of payloadDays) {
+        const key = day.dayStart.toISOString().slice(0, 10);
+        const existing = (existingByDay.get(key) ?? [])[0];
         const minutes = day.minutes;
-        const dayStart = startOfDay(entryDate);
+        const dayStart = day.dayStart;
+
+        if (minutes <= 0) {
+          if (existing) {
+            if (existing.status === "APPROVED") {
+              throw new Error(
+                `Cannot remove approved time on ${day.entryDate} from the weekly editor. Edit that entry directly instead.`
+              );
+            }
+            await tx.timeEntry.delete({ where: { id: existing.id } });
+          }
+          continue;
+        }
+
         const defaultStart = setHours(dayStart, 9);
 
         const latestEntry = await tx.timeEntry.findFirst({
@@ -171,6 +206,7 @@ export async function PUT(req: Request) {
             employeeId,
             entryDate: dayStart,
             status: { notIn: ["REJECTED"] },
+            ...(existing ? { id: { not: existing.id } } : {}),
           },
           orderBy: { endTime: "desc" },
         });
@@ -189,6 +225,7 @@ export async function PUT(req: Request) {
           where: {
             employeeId,
             status: { notIn: ["REJECTED"] },
+            ...(existing ? { id: { not: existing.id } } : {}),
             OR: [
               { startTime: { lte: startTime }, endTime: { gt: startTime } },
               { startTime: { lt: endTime }, endTime: { gte: endTime } },
@@ -202,22 +239,49 @@ export async function PUT(req: Request) {
         }
 
         const payPeriod = await ensurePayPeriodForDate(tx, dayStart);
+        const normalizedNote = parsed.data.note ?? null;
+        const isChanged =
+          !existing ||
+          existing.categoryId !== parsed.data.categoryId ||
+          existing.durationMinutes !== minutes ||
+          (existing.note ?? null) !== normalizedNote ||
+          existing.startTime.getTime() !== startTime.getTime() ||
+          (existing.endTime?.getTime() ?? null) !== endTime.getTime() ||
+          existing.payPeriodId !== (payPeriod?.id ?? null);
 
-        const entry = await tx.timeEntry.create({
-          data: {
-            employeeId,
-            categoryId: parsed.data.categoryId,
-            payPeriodId: payPeriod?.id,
-            entryDate: dayStart,
-            startTime,
-            endTime,
-            durationMinutes: minutes,
-            note: parsed.data.note,
-            source: "MANUAL",
-            status: "SUBMITTED",
-          },
-          include: { category: true },
-        });
+        const baseData = {
+          categoryId: parsed.data.categoryId,
+          payPeriodId: payPeriod?.id,
+          entryDate: dayStart,
+          startTime,
+          endTime,
+          durationMinutes: minutes,
+          note: normalizedNote,
+          source: "MANUAL" as const,
+        };
+
+        const entry = existing && !isChanged
+          ? existing
+          : existing
+          ? await tx.timeEntry.update({
+              where: { id: existing.id },
+              data: {
+                ...baseData,
+                status: "SUBMITTED",
+                approvedById: existing.status === "APPROVED" ? null : existing.approvedById,
+                approvedAt: existing.status === "APPROVED" ? null : existing.approvedAt,
+                rejectionReason: null,
+              },
+              include: { category: true },
+            })
+          : await tx.timeEntry.create({
+              data: {
+                employeeId,
+                ...baseData,
+                status: "SUBMITTED",
+              },
+              include: { category: true },
+            });
 
         results.push(entry);
       }
