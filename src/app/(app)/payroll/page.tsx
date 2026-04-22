@@ -118,6 +118,13 @@ export default async function PayrollPage() {
     }
   }
 
+  const categories = await prisma.timeCategory.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    take: 1,
+  });
+  const defaultCategoryId = categories[0]?.id ?? null;
+
   return (
     <div>
       <PageHeader
@@ -132,6 +139,7 @@ export default async function PayrollPage() {
         periodEntries={periodEntries}
         periodExpenses={periodExpenses}
         currentRole={role ?? "MANAGER"}
+        defaultCategoryId={defaultCategoryId}
       />
     </div>
   );
